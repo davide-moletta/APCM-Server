@@ -13,6 +13,8 @@ public class DB_Manager {
 	/**
 	 * Connect to the db_files database
 	 */
+
+	// define a logger for the class
 	private static final Logger log = LoggerFactory.getLogger(DB_Manager.class);
 
 	public static void connect() {
@@ -33,6 +35,7 @@ public class DB_Manager {
 				System.out.println(rs.getString("owner") +  "\t" +
 						rs.getString("path"));
 			}
+
 		} catch (SQLException e) {
 			log.error(e.getMessage());
 		} finally {
