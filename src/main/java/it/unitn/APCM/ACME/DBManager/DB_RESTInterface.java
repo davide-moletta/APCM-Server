@@ -1,7 +1,6 @@
 package it.unitn.APCM.ACME.DBManager;
 
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import java.sql.Connection;
@@ -33,4 +32,19 @@ public class DB_RESTInterface {
 		}
 		return res;
 	}
+
+
+	/*
+	 * public class DB_RESTInterface {
+
+	@RequestMapping(path = "/files", method = RequestMethod.GET)
+	public String login(@RequestParam String user, @RequestParam String groups, @RequestParam String path) {
+
+		return "user " + user + " from groups: " + groups + " wants to open: " + path;
+	}
+}
+
+
+
+	 */
 }

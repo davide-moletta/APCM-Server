@@ -9,7 +9,7 @@ import java.util.HashMap;
 public class Guard_RESTApp {
 	public static void main(String[] args) {
 		SpringApplication app = new SpringApplication(Guard_RESTApp.class);
-		HashMap properties = new HashMap(2);
+		HashMap<String, Object> properties = new HashMap<String, Object>(2);
 		properties.put("server.port", "8090");
 		properties.put("spring.application.name", "Guard_RESTApp");
 		app.setDefaultProperties(properties);
