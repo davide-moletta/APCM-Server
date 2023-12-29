@@ -11,6 +11,7 @@ import org.springframework.web.client.RestTemplate;
 import java.sql.Connection;
 
 @RestController
+@RequestMapping("/api/v1")
 public class Guard_RESTInterface {
 	// Connection statically instantiated
 	private final Connection conn = Guard_Connection.getDbconn();

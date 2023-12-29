@@ -1,6 +1,7 @@
 package it.unitn.APCM.ACME.DBManager;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import java.sql.Connection;
@@ -9,10 +10,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 @RestController
+@RequestMapping("/api/v1")
 public class DB_RESTInterface {
 	// Connection statically instantiated
 	private final Connection conn = DB_Connection.getDbconn();
 
+	/**
+	 * 	Endpoint for list all file for a specific owner
+	 */
 	@GetMapping("/files")
 	public String get_files(@RequestParam(value = "owner", defaultValue = "test") String owner) {
 		String res = null;
@@ -32,6 +37,8 @@ public class DB_RESTInterface {
 		}
 		return res;
 	}
+
+
 
 
 	/*
