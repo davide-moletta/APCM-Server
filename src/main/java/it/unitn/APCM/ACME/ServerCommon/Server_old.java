@@ -1,3 +1,5 @@
+package it.unitn.APCM.ACME.ServerCommon;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -5,7 +7,7 @@ import java.lang.ClassNotFoundException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class Server {
+public class Server_old {
     
     //static ServerSocket variable
     private static ServerSocket server;
