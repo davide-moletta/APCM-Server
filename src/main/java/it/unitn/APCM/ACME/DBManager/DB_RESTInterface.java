@@ -55,6 +55,7 @@ public class DB_RESTInterface {
 			@RequestParam(value = "user") String user,
 			@RequestParam(value = "user_groups") String user_group,
 			@RequestParam(value = "admin") String admin) {
+
 		HashMap<String, String> res = new HashMap<>();
 		boolean auth = false;
 		boolean w_mode = false;
@@ -69,29 +70,30 @@ public class DB_RESTInterface {
 			ResultSet rs = ps.executeQuery();
 			while (rs.next()) {
 				if (rs.isFirst()) {
-					if (rs.getString("owner").equals(user)) {
+					if (admin.equals("1")) {
+						log.trace("User is an admin");
+						auth = true;
+						w_mode = true;
+					} else if (rs.getString("owner").equals(user)) {
 						log.trace("User is the owner for the file requested");
 						auth = true;
 						w_mode = true;
 					} else {
 						ArrayList<String> rw_groups = new JSONToArray(rs.getString("rw_groups"));
 						ArrayList<String> r_groups = new JSONToArray(rs.getString("r_groups"));
-						if (admin.equals("1")) {
-							auth = true;
-							w_mode = true;
-						} else {
-							for (String g : user_groups) {
-								if (rw_groups.contains(g)) {
-									auth = true;
-									w_mode = true;
-									break;
-								} else if (r_groups.contains(g)) {
-									auth = true;
-									w_mode = false;
-									// no break because can be also present after another g in the rw_groups
-								}
+
+						for (String g : user_groups) {
+							if (rw_groups.contains(g)) {
+								auth = true;
+								w_mode = true;
+								break;
+							} else if (r_groups.contains(g)) {
+								auth = true;
+								w_mode = false;
+								// no break because can be also present after another g in the rw_groups
 							}
 						}
+
 					}
 				} else {
 					// more than one result
