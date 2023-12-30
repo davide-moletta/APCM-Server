@@ -1,6 +1,5 @@
 package it.unitn.APCM.ACME.DBManager;
 
-import it.unitn.APCM.ACME.Guard.Guard_Connection;
 import it.unitn.APCM.ACME.ServerCommon.JDBC_Connection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
