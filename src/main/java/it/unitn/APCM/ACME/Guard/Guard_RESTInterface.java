@@ -40,10 +40,23 @@ public class Guard_RESTInterface {
 	 * Endpoint to add or remove users from db
 	 */
 	@GetMapping("/user")
-	public String add_user(@RequestParam String email, @RequestParam String pwd, @RequestParam String user_groups,
-			@RequestParam String admin) {
+	public String add_user(@RequestParam String path) {
 
-		return "";
+		String path_hash = null;
+		try {
+			MessageDigest md = MessageDigest.getInstance("SHA-512");
+			byte[] bytes = md.digest(path.getBytes(StandardCharsets.UTF_8));
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < bytes.length; i++) {
+				sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
+			}
+			path_hash = sb.toString();
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		}
+
+
+		return "path hash: " + path_hash + "\n real hash: 4e9b41c6f74a3d176b5f4b52eba527fee73e17f9cbb65e6a6d2b9c1cdd6753d8bb917aa8f9adccbd326bb65d72f1020324ca6dd6d5f05d22d2dcc349391e305a";
 	}
 
 	/**
@@ -94,9 +107,6 @@ public class Guard_RESTInterface {
 		} catch (NoSuchAlgorithmException e) {
 			throw new RuntimeException(e);
 		}
-
-		// for testing since sha is not working
-		path_hash = "4e9b41c6f74a3d176b5f4b52eba527fee73e17f9cbb65e6a6d2b9c1cdd6753d8bb917aa8f9adccbd326bb65d72f1020324ca6dd6d5f05d22d2dcc349391e305a";
 
 		String DB_request_url = dbServer_url + "path_hash=" + path_hash +
 				"&user=" + email +
