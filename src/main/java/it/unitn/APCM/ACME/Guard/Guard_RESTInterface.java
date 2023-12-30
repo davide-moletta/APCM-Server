@@ -2,8 +2,7 @@ package it.unitn.APCM.ACME.Guard;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -16,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import it.unitn.APCM.ACME.ServerCommon.JSONToArray;
+import it.unitn.APCM.ACME.ServerCommon.Response;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -55,6 +55,7 @@ public class Guard_RESTInterface {
 
 		String userQuery = "SELECT groups, admin FROM Users WHERE email=? AND pass=?";
 		PreparedStatement preparedStatement;
+		RestTemplate restTemplate = new RestTemplate();
 
 		try {
 			preparedStatement = conn.prepareStatement(userQuery);
@@ -84,8 +85,6 @@ public class Guard_RESTInterface {
 			groupsToString = groupsToString.substring(0, groupsToString.length() - 1);
 		}
 
-		System.out.println(groupsToString);
-
 		String path_hash = null;
 		try {
 			MessageDigest md = MessageDigest.getInstance("SHA-512");
@@ -105,17 +104,22 @@ public class Guard_RESTInterface {
 		String DB_request_url = dbServer_url + "path_hash=" + path_hash +
 				"&user=" + email +
 				"&user_groups=" + groupsToString +
-				"&admin=" + admin;
+				"&admin=" + admin +
+				"&id=1";
 
 		log.trace("Requesting for: " + DB_request_url);
 
 		String responseBody = "";
 
 		try {
-			RestTemplate restTemplate = new RestTemplate();
-			ResponseEntity<String> response = restTemplate.getForEntity(DB_request_url, String.class);
+			
+			Response response = restTemplate.getForEntity(DB_request_url, Response.class).getBody();
 
-			if (response.getStatusCode() == HttpStatus.OK) responseBody = response.getBody();
+			if (response != null) {
+				//make checks and reply to client
+				System.out.println(response.get_key());
+			}
+	
 		} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
 			log.error("Error in the response from DB server");
 			return e.toString();

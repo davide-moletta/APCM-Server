@@ -2,9 +2,13 @@ package it.unitn.APCM.ACME.DBManager;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import it.unitn.APCM.ACME.ServerCommon.JSONToArray;
+import it.unitn.APCM.ACME.ServerCommon.Response;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -51,14 +55,18 @@ public class DB_RESTInterface {
 	 * Endpoint for getting the password of the specified file if authorized
 	 */
 	@GetMapping("/decryption_key")
-	public Map<String, String> get_key(@RequestParam(value = "path_hash") String path_hash,
+	public ResponseEntity<Response> get_key(@RequestParam(value = "path_hash") String path_hash,
 			@RequestParam(value = "user") String user,
 			@RequestParam(value = "user_groups") String user_group,
-			@RequestParam(value = "admin") String admin) {
+			@RequestParam(value = "admin") String admin,
+			@RequestParam(value = "id") int id) {
 
-		HashMap<String, String> res = new HashMap<>();
-		boolean auth = false;
-		boolean w_mode = false;
+		Response res = new Response();
+		res.set_auth(false);
+		res.set_w_mode(false);
+		res.set_email(user);
+		res.set_path_hash(path_hash);
+		res.set_id(id);
 
 		ArrayList<String> user_groups = new ArrayList<String>(Arrays.asList(user_group.split(",")));
 
@@ -72,24 +80,24 @@ public class DB_RESTInterface {
 				if (rs.isFirst()) {
 					if (admin.equals("1")) {
 						log.trace("User is an admin");
-						auth = true;
-						w_mode = true;
+						res.set_auth(true);
+						res.set_w_mode(true);
 					} else if (rs.getString("owner").equals(user)) {
 						log.trace("User is the owner for the file requested");
-						auth = true;
-						w_mode = true;
+						res.set_auth(true);
+						res.set_w_mode(true);
 					} else {
 						ArrayList<String> rw_groups = new JSONToArray(rs.getString("rw_groups"));
 						ArrayList<String> r_groups = new JSONToArray(rs.getString("r_groups"));
 
 						for (String g : user_groups) {
 							if (rw_groups.contains(g)) {
-								auth = true;
-								w_mode = true;
+								res.set_auth(true);
+								res.set_w_mode(true);
 								break;
 							} else if (r_groups.contains(g)) {
-								auth = true;
-								w_mode = false;
+								res.set_auth(true);
+								res.set_w_mode(false);
 								// no break because can be also present after another g in the rw_groups
 							}
 						}
@@ -106,7 +114,7 @@ public class DB_RESTInterface {
 			throw new RuntimeException(e);
 		}
 
-		if (auth) {
+		if (res.get_auth()) {
 			// Check ok then return key
 			String selectQuery = "SELECT path_hash, encryption_key FROM Files WHERE path_hash = ?";
 			try {
@@ -115,18 +123,19 @@ public class DB_RESTInterface {
 				ResultSet rs = ps.executeQuery();
 
 				while (rs.next()) {
-					res.put("path_hash", rs.getString("path_hash"));
-					res.put("key", rs.getString("encryption_key"));
-					res.put("w_mode", String.valueOf(w_mode));
+					res.set_key(rs.getString("encryption_key"));
 				}
 			} catch (SQLException e) {
 				throw new RuntimeException(e);
 			}
 		} else {
-			// Even if the file doesn't exist, same error code
-			log.warn("Access to a file not authorized");
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "");
+			res.set_key("noKey");
 		}
-		return res;
+
+		HttpHeaders headers = new HttpHeaders();
+
+		ResponseEntity<Response> entity = new ResponseEntity<>(res, headers, HttpStatus.CREATED);
+
+		return entity;
 	}
 }
