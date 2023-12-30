@@ -2,7 +2,9 @@ package it.unitn.APCM.ACME.Guard;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -48,10 +50,11 @@ public class Guard_RESTInterface {
 	 * Endpoint to "login" and retrieve a file
 	 */
 	@GetMapping("/file")
-	public String get_file(@RequestParam String email, @RequestParam String pwd, @RequestParam String path) {
+	public ResponseEntity<Response> get_file(@RequestParam String email, @RequestParam String pwd, @RequestParam String path) {
 
 		ArrayList<String> groups = null;
 		int admin = 0;
+		Response res = new Response();
 
 		String userQuery = "SELECT groups, admin FROM Users WHERE email=? AND pass=?";
 		PreparedStatement preparedStatement;
@@ -70,13 +73,7 @@ public class Guard_RESTInterface {
 		} catch (SQLException | JsonProcessingException e) {
 			throw new RuntimeException(e);
 		}
-
-		// no response from the users db
-		if (groups == null) {
-			log.warn("user does not exist");
-			return "user does not exist";
-		}
-
+		
 		String groupsToString = "";
 		if (groups != null) {
 			for (int i = 0; i < groups.size(); i++) {
@@ -109,7 +106,8 @@ public class Guard_RESTInterface {
 
 		log.trace("Requesting for: " + DB_request_url);
 
-		String responseBody = "";
+		HttpHeaders headers = new HttpHeaders();
+		ResponseEntity<Response> entity = new ResponseEntity<>(res, headers, HttpStatus.CREATED);
 
 		try {
 			
@@ -117,14 +115,21 @@ public class Guard_RESTInterface {
 
 			if (response != null) {
 				//make checks and reply to client
-				System.out.println(response.get_key());
+
+				if (!response.get_auth()) {
+					// non può accedere
+				} else if(!response.get_w_mode()){
+					// può solo leggere	
+					//display del file senza "salva"
+				} else {
+					//può fare tutto
+					// display del file
+				}
 			}
-	
 		} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
 			log.error("Error in the response from DB server");
-			return e.toString();
 		}
 
-		return responseBody;
+		return entity;
 	}
 }
