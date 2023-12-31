@@ -20,6 +20,7 @@ import it.unitn.APCM.ACME.ServerCommon.JSONToArray;
 import it.unitn.APCM.ACME.ServerCommon.Response;
 
 import java.nio.charset.StandardCharsets;
+import java.io.File;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
@@ -34,45 +35,55 @@ public class Guard_RESTInterface {
 	// Connection statically instantiated
 	private final Connection conn = Guard_Connection.getDbconn();
 	private static final Logger log = LoggerFactory.getLogger(Guard_RESTInterface.class);
-	private String dbServer_url = "http://localhost:8091/api/v1/decryption_key?";
+	private static final String dbServer_url = "http://localhost:8091/api/v1/decryption_key?";
+	private static final String filePath = "src\\main\\java\\it\\unitn\\APCM\\ACME\\Guard\\Files";
+
+	private String fetch_files(String path, String files) {
+
+		File directoryPath = new File(path);
+		String contents[] = directoryPath.list();
+
+		for (String content : contents) {
+			if (content.contains(".")) {
+				// is a file
+				files = files.concat(path + "\\" + content + "\n");
+			} else {
+				// is a directory
+				files = files.concat(fetch_files(path + "\\" + content, ""));
+			}
+		}
+		return files;
+	}
 
 	/**
 	 * Endpoint to add or remove users from db
 	 */
-	@GetMapping("/user")
-	public String add_user(@RequestParam String path) {
+	@GetMapping("/files")
+	public ResponseEntity<String> get_files() {
+				
+		log.trace("got a requst for available files");
+		String files = fetch_files(filePath, "");
 
-		String path_hash = null;
-		try {
-			MessageDigest md = MessageDigest.getInstance("SHA-512");
-			byte[] bytes = md.digest(path.getBytes(StandardCharsets.UTF_8));
-			StringBuilder sb = new StringBuilder();
-			for (int i = 0; i < bytes.length; i++) {
-				sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
-			}
-			path_hash = sb.toString();
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
-		}
+		HttpHeaders headers = new HttpHeaders();
+		ResponseEntity<String> entity = new ResponseEntity<>(files, headers, HttpStatus.CREATED);
 
-
-		return "path hash: " + path_hash + "\n real hash: 4e9b41c6f74a3d176b5f4b52eba527fee73e17f9cbb65e6a6d2b9c1cdd6753d8bb917aa8f9adccbd326bb65d72f1020324ca6dd6d5f05d22d2dcc349391e305a";
+		return entity;
 	}
 
 	/**
 	 * Endpoint to "login" and retrieve a file
 	 */
 	@GetMapping("/file")
-	public ResponseEntity<Response> get_file(@RequestParam String email, @RequestParam String pwd, @RequestParam String path) {
+	public ResponseEntity<Response> get_file(@RequestParam String email,
+			@RequestParam String pwd,
+			@RequestParam String path) {
 
 		ArrayList<String> groups = null;
-		int admin = 0;
-		Response res = new Response();
-
+		int admin = -1;
 		String userQuery = "SELECT groups, admin FROM Users WHERE email=? AND pass=?";
 		PreparedStatement preparedStatement;
-		RestTemplate restTemplate = new RestTemplate();
 
+		// Create the query and retrieve results from user db
 		try {
 			preparedStatement = conn.prepareStatement(userQuery);
 			preparedStatement.setString(1, email);
@@ -86,7 +97,8 @@ public class Guard_RESTInterface {
 		} catch (SQLException | JsonProcessingException e) {
 			throw new RuntimeException(e);
 		}
-		
+
+		// transform the array of groups into a string with separator ","
 		String groupsToString = "";
 		if (groups != null) {
 			for (int i = 0; i < groups.size(); i++) {
@@ -95,6 +107,7 @@ public class Guard_RESTInterface {
 			groupsToString = groupsToString.substring(0, groupsToString.length() - 1);
 		}
 
+		// transform the received path into the corresponding hash with SHA-512
 		String path_hash = null;
 		try {
 			MessageDigest md = MessageDigest.getInstance("SHA-512");
@@ -108,7 +121,9 @@ public class Guard_RESTInterface {
 			throw new RuntimeException(e);
 		}
 
-		String DB_request_url = dbServer_url + "path_hash=" + path_hash +
+		// creaft the request to the db interface
+		String DB_request_url = dbServer_url +
+				"path_hash=" + path_hash +
 				"&user=" + email +
 				"&user_groups=" + groupsToString +
 				"&admin=" + admin +
@@ -116,23 +131,27 @@ public class Guard_RESTInterface {
 
 		log.trace("Requesting for: " + DB_request_url);
 
+		// sends the request and capture the response
+		Response res = new Response();
 		HttpHeaders headers = new HttpHeaders();
 		ResponseEntity<Response> entity = new ResponseEntity<>(res, headers, HttpStatus.CREATED);
+		RestTemplate restTemplate = new RestTemplate();
 
 		try {
-			
+
+			// get the response and decide accordingly
 			Response response = restTemplate.getForEntity(DB_request_url, Response.class).getBody();
 
 			if (response != null) {
-				//make checks and reply to client
+				// make checks and reply to client
 
 				if (!response.get_auth()) {
 					// non può accedere
-				} else if(!response.get_w_mode()){
-					// può solo leggere	
-					//display del file senza "salva"
+				} else if (!response.get_w_mode()) {
+					// può solo leggere
+					// display del file senza "salva"
 				} else {
-					//può fare tutto
+					// può fare tutto
 					// display del file
 				}
 			}
