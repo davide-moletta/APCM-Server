@@ -122,8 +122,15 @@ public class DB_RESTInterface {
 				ps.setString(1, path_hash);
 				ResultSet rs = ps.executeQuery();
 
+				String encryptionKey = ""; 
+
 				while (rs.next()) {
-					res.set_key(rs.getString("encryption_key"));
+					encryptionKey = (rs.getString("encryption_key"));
+				}
+
+				if(encryptionKey != ""){
+					//DECIFRARE CHIAVE
+					res.set_key(encryptionKey);
 				}
 			} catch (SQLException e) {
 				throw new RuntimeException(e);

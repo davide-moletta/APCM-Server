@@ -1,11 +1,20 @@
 package it.unitn.APCM.ACME.DBManager.SSS;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.StringJoiner;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
+import org.yaml.snakeyaml.events.DocumentEndEvent;
 
 /**
  * An implementation of Shamir's Secret Sharing over {@code GF(256)} to securely split secrets into
@@ -21,10 +30,6 @@ import java.util.StringJoiner;
  */
 public class Shamir {
 
-  private final SecureRandom random;
-  private final int n;
-  private final int k;
-
   /**
    * Creates a new {@link Scheme} instance.
    *
@@ -32,6 +37,11 @@ public class Shamir {
    * @param n the number of parts to produce (must be {@code >1})
    * @param k the threshold of joinable parts (must be {@code <= n})
    */
+  private SecureRandom random;
+  private int n;
+  private int k;
+
+  /*
   public Shamir(SecureRandom random, int n, int k) {
     this.random = random;
     checkArgument(k > 1, "K must be > 1");
@@ -39,6 +49,11 @@ public class Shamir {
     checkArgument(n <= 255, "N must be <= 255");
     this.n = n;
     this.k = k;
+  }*/
+
+  public Shamir(){
+    this.n = 5;
+    this.k = 3;
   }
 
   /**
@@ -148,32 +163,53 @@ public class Shamir {
     }
   }
 
-  public static void main(String[] agrs){
-    Shamir sc = new Shamir(new SecureRandom(), 5, 3);
-    String secret = "My own secret";
-    Map<Integer, byte[]> keySplitted = sc.split(secret.getBytes());
-    String v;
-    for(Map.Entry<Integer, byte[]> entry : keySplitted.entrySet()){
-      v = new String(entry.getValue());
-      System.out.println("Key= " + entry.getKey() + ", Value = " + v);
-    }
+  private byte[] parse(String stringToParse){
+		if(stringToParse == ""){
+			return null;
+		}
+		String[] parsedString = (stringToParse.split(","));
+		byte[] bytes = new byte[parsedString.length];
+		int i = 0;
+		for(String s: parsedString){
+			bytes[i] = (byte)(Integer.parseInt(s));
+			i++;
+		}
+		return bytes;
+	}
 
-    Map<Integer, byte[]> attempt1 = new HashMap<Integer, byte[]>();
-    attempt1.put(1, keySplitted.get(1));
-    attempt1.put(2, keySplitted.get(2));
-    attempt1.put(5, keySplitted.get(5));
+	public SecretKey getMasterSecret(){
+		byte[] seed = null;
+		byte[] k1 = null;
+		byte[] k2 = null;
+		byte[] k3 = null;
+		byte[] k4 = null;
+		byte[] k5 = null;
 
-    byte[] secretByte = sc.join(attempt1);
-    String s = new String(secretByte);
-    System.out.println(s);
-
-    Map<Integer, byte[]> attempt2 = new HashMap<Integer, byte[]>();
-    attempt2.put(1, keySplitted.get(1));
-    attempt2.put(3, keySplitted.get(2));
-    attempt2.put(5, keySplitted.get(5));
-
-    byte[] wrongSecretByte = sc.join(attempt2);
-    String wS = new String(wrongSecretByte);
-    System.out.println(wS);
-  }
+		try {
+			String content = new String(Files.readAllBytes(Paths.get("SSS.txt")));
+			String[] seedString = (content.split(";"));
+			seed = parse(seedString[0]);
+			k1 = parse(seedString[1]);
+			k2 = parse(seedString[2]);
+			k3 = parse(seedString[3]);
+			k4 = parse(seedString[4]);
+			k5 = parse(seedString[5]);
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		this.random = new SecureRandom(seed);	
+		
+		Map<Integer, byte[]> keys = new HashMap<Integer, byte[]>();
+		if(k1 != null){ keys.put(1, k1); }
+		if(k2 != null){ keys.put(2, k2); }
+		if(k3 != null){ keys.put(3, k3); }
+		if(k4 != null){ keys.put(4, k4); }
+		if(k5 != null){ keys.put(5, k5); }
+	
+		byte[] secretByte = this.join(keys);
+		//CHECK ALGORITHM
+		return new SecretKeySpec(secretByte, 0, secretByte.length, "chacha20"); 
+	}
 }
