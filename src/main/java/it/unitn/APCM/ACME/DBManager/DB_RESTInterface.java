@@ -15,11 +15,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.AlgorithmParameterSpec;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.ChaCha20ParameterSpec;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -27,6 +37,13 @@ public class DB_RESTInterface {
 	// Connection statically instantiated
 	private final Connection conn = DB_Connection.getDbconn();
 	private static final Logger log = LoggerFactory.getLogger(DB_RESTInterface.class);
+	// encryption algorithm
+	//CHECK TYPE OF ENCRYPTION ALGORITHM
+    static final String cipherString = "ChaCha20";
+	// length of key in bytes
+    static final int keyByteLen = 20;
+    // IV length
+    static final int IVLEN = 12;
 
 	/**
 	 * Endpoint for list all file for a specific owner
@@ -122,15 +139,15 @@ public class DB_RESTInterface {
 				ps.setString(1, path_hash);
 				ResultSet rs = ps.executeQuery();
 
-				String encryptionKey = ""; 
+				byte[] encryptionKey = null; 
 
 				while (rs.next()) {
-					encryptionKey = (rs.getString("encryption_key"));
+					encryptionKey = (rs.getBytes("encryption_key"));
 				}
 
-				if(encryptionKey != ""){
-					//DECIFRARE CHIAVE
-					res.set_key(encryptionKey);
+				if(encryptionKey.length != 0){
+					//CHECK: Set encryption as byte[] => remove new String()
+					res.set_key(new String(decrypt(encryptionKey)));
 				}
 			} catch (SQLException e) {
 				throw new RuntimeException(e);
@@ -145,4 +162,80 @@ public class DB_RESTInterface {
 
 		return entity;
 	}
+
+	// encrypt key
+    private byte[] encrypt(byte[] keyToEnc) {
+        // check that there is some data to encrypt
+        if (keyToEnc.length == 0) {
+            log.error("No key to encrypt");
+            return null;
+        }
+        try {
+            // Create the cipher
+            Cipher cipher = Cipher.getInstance(cipherString);
+            // Initialize the cipher for encryption
+            cipher.init(Cipher.ENCRYPT_MODE, DB_RESTApp.masterKey);
+
+            // Retrieve the parameters used during encryption
+            // they will be needed for decryption
+            byte[] iv = cipher.getIV();
+
+            // Encrypt the input data
+            byte[] ciphertext = cipher.doFinal(keyToEnc);
+
+            // set output
+            byte[] encrytedKey = new byte[iv.length + ciphertext.length];
+            // first part is the IV
+            System.arraycopy(iv, 0, encrytedKey, 0, IVLEN);
+            // second part is the ciphertext
+            System.arraycopy(ciphertext, 0, encrytedKey, IVLEN, ciphertext.length);
+            
+			log.trace("Encrypted key");
+			return encrytedKey;
+
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+            log.error("Encryption failed: " + e);
+			return null;
+        }
+    }
+
+	// decrypt key
+    private byte[] decrypt(byte[] encKey) {
+        // check that there is some data to decrypt
+        if (encKey.length == 0) {
+            log.error("No encryption key to decrypt");
+            return null;
+        }
+        try {
+			byte[] decKey;
+            // Create the cipher
+            Cipher cipher = Cipher.getInstance(cipherString);
+            // Retrieve the parameters used during encryption to properly  
+            // initialize the cipher for decryption
+            byte[] iv = new byte[IVLEN];
+            byte[] ciphertext = new byte[encKey.length - IVLEN];
+            // first part is the IV
+            System.arraycopy(encKey, 0, iv, 0, IVLEN);
+            // second part is the ciphertext
+            System.arraycopy(encKey, IVLEN, ciphertext, 0, ciphertext.length);
+            // initialize parameters
+            // !!! this is specific for ChaCha20
+            AlgorithmParameterSpec chachaSpec = new ChaCha20ParameterSpec(iv, 1);
+            // Initialize cipher for decryption
+            cipher.init(Cipher.DECRYPT_MODE, DB_RESTApp.masterKey, chachaSpec);
+            // Decrypt the input data
+            decKey = cipher.doFinal(ciphertext);
+
+            // give feedback
+            log.trace("Key decrypted");
+
+			return decKey;
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | InvalidAlgorithmParameterException e) {
+            // in case of error show error dialog and print to console
+            log.error("Decryption failed");
+			return null;
+        }
+    }
+
+	
 }

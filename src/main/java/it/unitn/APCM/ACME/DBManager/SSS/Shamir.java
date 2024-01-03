@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
-import java.security.Security;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,8 +12,6 @@ import java.util.StringJoiner;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-
-import org.yaml.snakeyaml.events.DocumentEndEvent;
 
 /**
  * An implementation of Shamir's Secret Sharing over {@code GF(256)} to securely split secrets into
@@ -41,7 +38,7 @@ public class Shamir {
   private int n;
   private int k;
 
-  /*
+  
   public Shamir(SecureRandom random, int n, int k) {
     this.random = random;
     checkArgument(k > 1, "K must be > 1");
@@ -49,7 +46,7 @@ public class Shamir {
     checkArgument(n <= 255, "N must be <= 255");
     this.n = n;
     this.k = k;
-  }*/
+  }
 
   public Shamir(){
     this.n = 5;
@@ -194,9 +191,7 @@ public class Shamir {
 			k3 = parse(seedString[3]);
 			k4 = parse(seedString[4]);
 			k5 = parse(seedString[5]);
-			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		this.random = new SecureRandom(seed);	
@@ -209,7 +204,7 @@ public class Shamir {
 		if(k5 != null){ keys.put(5, k5); }
 	
 		byte[] secretByte = this.join(keys);
-		//CHECK ALGORITHM
+		//CHECK ENCRYPTION ALGORITHM
 		return new SecretKeySpec(secretByte, 0, secretByte.length, "chacha20"); 
 	}
 }
