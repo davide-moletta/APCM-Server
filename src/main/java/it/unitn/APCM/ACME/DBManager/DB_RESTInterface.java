@@ -139,15 +139,14 @@ public class DB_RESTInterface {
 				ps.setString(1, path_hash);
 				ResultSet rs = ps.executeQuery();
 
-				byte[] encryptionKey = null; 
+				String encryptionKey = null; 
 
 				while (rs.next()) {
-					encryptionKey = (rs.getBytes("encryption_key"));
+					encryptionKey = (rs.getString("encryption_key"));
 				}
 
-				if(encryptionKey.length != 0){
-					//CHECK: Set encryption as byte[] => remove new String()
-					res.set_key(new String(decrypt(encryptionKey)));
+				if(encryptionKey == ""){
+					res.set_key(new String(decrypt(encryptionKey.getBytes())));
 				}
 			} catch (SQLException e) {
 				throw new RuntimeException(e);
