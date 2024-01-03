@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -28,7 +30,9 @@ import java.util.Map;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.ChaCha20ParameterSpec;
 
 @RestController
@@ -161,6 +165,24 @@ public class DB_RESTInterface {
 
 		return entity;
 	}
+
+	private static SecretKey getSymmetricKey(){
+        SecretKey cipherKey = null;
+        
+		// if no valid data read from file, create new
+		KeyGenerator keygen;
+		try {
+			keygen = KeyGenerator.getInstance(cipherString);
+			// specify key length in bits
+			keygen.init(keyByteLen * 8);
+			cipherKey = keygen.generateKey();
+		} catch (NoSuchAlgorithmException e) {
+			log.error("Error in symmetric key generation");
+			return null;
+		}
+        return cipherKey;
+    }
+
 
 	// encrypt key
     private byte[] encrypt(byte[] keyToEnc) {
