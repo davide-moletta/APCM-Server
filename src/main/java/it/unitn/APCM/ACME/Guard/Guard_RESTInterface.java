@@ -21,6 +21,9 @@ import it.unitn.APCM.ACME.ServerCommon.Response;
 
 import java.nio.charset.StandardCharsets;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import org.apache.commons.io.IOUtils;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
@@ -46,13 +49,13 @@ public class Guard_RESTInterface {
 		for (String content : contents) {
 			if (content.contains(".")) {
 				// is a file
-				files = files.concat(path + "\\" + content + "\n");
+				files = files.concat(path + "/" + content + "\n");
 			} else {
 				// is a directory
-				files = files.concat(fetch_files(path + "\\" + content, ""));
+				files = files.concat(fetch_files(path + "/" + content, ""));
 			}
 		}
-		return files;
+		return files.replace("src\\main\\java\\it\\unitn\\APCM\\ACME\\Guard\\", "");
 	}
 
 	/**
@@ -90,7 +93,8 @@ public class Guard_RESTInterface {
 			preparedStatement.setString(2, password);
 			ResultSet rs = preparedStatement.executeQuery();
 
-			if (rs.next()) response = "authenticated";
+			if (rs.next())
+				response = "authenticated";
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
@@ -104,10 +108,10 @@ public class Guard_RESTInterface {
 	/**
 	 * Endpoint to retrieve a file
 	 */
-	@GetMapping("/file")
-	public ResponseEntity<Response> get_file(@RequestParam String email,
+	@GetMapping(value = "/file")
+	public ResponseEntity<String> get_file(@RequestParam String email,
 			@RequestParam String password,
-			@RequestParam String path) {
+			@RequestParam String path) throws IOException {
 
 		ArrayList<String> groups = null;
 		int admin = -1;
@@ -155,7 +159,7 @@ public class Guard_RESTInterface {
 		// creaft the request to the db interface
 		String DB_request_url = dbServer_url +
 				"path_hash=" + path_hash +
-				"&user=" + email +
+				"&email=" + email +
 				"&user_groups=" + groupsToString +
 				"&admin=" + admin +
 				"&id=1";
@@ -163,32 +167,52 @@ public class Guard_RESTInterface {
 		log.trace("Requesting for: " + DB_request_url);
 
 		// sends the request and capture the response
-		Response res = new Response();
-		HttpHeaders headers = new HttpHeaders();
-		ResponseEntity<Response> entity = new ResponseEntity<>(res, headers, HttpStatus.CREATED);
 		RestTemplate restTemplate = new RestTemplate();
+
+		Response response = new Response();
+		response.set_path_hash(path);
+		response.set_auth(false);
+		response.set_email(email);
+		response.set_id(1);
+		response.set_w_mode(false);
+		response.set_key(null);
+
+		String fileContent = "";
 
 		try {
 
 			// get the response and decide accordingly
-			Response response = restTemplate.getForEntity(DB_request_url, Response.class).getBody();
+			Response res = restTemplate.getForEntity(DB_request_url, Response.class).getBody();
 
-			if (response != null) {
-				// make checks and reply to client
+			if (res != null) {
+				if (res.get_auth()) {
+					if (res.get_w_mode()) {
+						// può fare tutto
+						response.set_auth(true);
+						response.set_w_mode(true);
+					} else {
+						// può solo leggere
+						// display del file senza "salva"
+						response.set_auth(true);
+					}
 
-				if (!response.get_auth()) {
-					// non può accedere
-				} else if (!response.get_w_mode()) {
-					// può solo leggere
-					// display del file senza "salva"
-				} else {
-					// può fare tutto
-					// display del file
+					// decript del file con chiave
+
+					InputStream in = getClass().getResourceAsStream(path);
+					try {
+						fileContent = IOUtils.toString(in, StandardCharsets.UTF_8);
+					} catch (IOException e) {
+						// Handle the exception according to your application's logic
+						log.error("Error reading file: " + e.getMessage());
+					}
 				}
 			}
 		} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
 			log.error("Error in the response from DB server");
 		}
+
+		HttpHeaders headers = new HttpHeaders();
+		ResponseEntity<String> entity = new ResponseEntity<>(fileContent, headers, HttpStatus.CREATED);
 
 		return entity;
 	}

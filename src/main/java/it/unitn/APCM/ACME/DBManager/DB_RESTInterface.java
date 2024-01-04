@@ -75,7 +75,7 @@ public class DB_RESTInterface {
 	 */
 	@GetMapping("/decryption_key")
 	public ResponseEntity<Response> get_key(@RequestParam(value = "path_hash") String path_hash,
-			@RequestParam(value = "user") String user,
+			@RequestParam(value = "email") String email,
 			@RequestParam(value = "user_groups") String user_group,
 			@RequestParam(value = "admin") String admin,
 			@RequestParam(value = "id") int id) {
@@ -83,7 +83,7 @@ public class DB_RESTInterface {
 		Response res = new Response();
 		res.set_auth(false);
 		res.set_w_mode(false);
-		res.set_email(user);
+		res.set_email(email);
 		res.set_path_hash(path_hash);
 		res.set_id(id);
 
@@ -101,7 +101,7 @@ public class DB_RESTInterface {
 						log.trace("User is an admin");
 						res.set_auth(true);
 						res.set_w_mode(true);
-					} else if (rs.getString("owner").equals(user)) {
+					} else if (rs.getString("owner").equals(email)) {
 						log.trace("User is the owner for the file requested");
 						res.set_auth(true);
 						res.set_w_mode(true);
@@ -144,12 +144,13 @@ public class DB_RESTInterface {
 				String encryptionKey = null;
 
 				while (rs.next()) {
-					encryptionKey = (rs.getString("encryption_key"));
+					res.set_key(rs.getString("encryption_key"));
+					//encryptionKey = (rs.getString("encryption_key"));
 				}
 
-				if (encryptionKey == "") {
-					res.set_key(new String(decrypt(encryptionKey.getBytes())));
-				}
+				// if (encryptionKey == "") {
+				// 	res.set_key(new String(decrypt(encryptionKey.getBytes())));
+				// }
 			} catch (SQLException e) {
 				throw new RuntimeException(e);
 			}
