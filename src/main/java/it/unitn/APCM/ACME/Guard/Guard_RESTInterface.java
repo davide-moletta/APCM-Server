@@ -56,7 +56,7 @@ public class Guard_RESTInterface {
 	}
 
 	/**
-	 * Endpoint to add or remove users from db
+	 * Endpoint to retrieve the available files
 	 */
 	@GetMapping("/files")
 	public ResponseEntity<String> get_files() {
@@ -66,6 +66,39 @@ public class Guard_RESTInterface {
 
 		HttpHeaders headers = new HttpHeaders();
 		ResponseEntity<String> entity = new ResponseEntity<>(files, headers, HttpStatus.CREATED);
+
+		return entity;
+	}
+
+	/**
+	 * Endpoint to login
+	 */
+	@GetMapping("/login")
+	public ResponseEntity<String> login(@RequestParam String email, @RequestParam String password) {
+				
+		log.trace("got a requst for login from: " + email);
+		
+		String loginQuery = "SELECT email FROM Users WHERE email=? AND pass=?";
+		PreparedStatement preparedStatement;
+
+		String response = "not authenticated";
+
+		// Create the query and retrieve results from user db
+		try {
+			preparedStatement = conn.prepareStatement(loginQuery);
+			preparedStatement.setString(1, email);
+			preparedStatement.setString(2, password);
+			ResultSet rs = preparedStatement.executeQuery();
+
+			if (rs.next()) {
+				response = "authenticated";
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+
+		HttpHeaders headers = new HttpHeaders();
+		ResponseEntity<String> entity = new ResponseEntity<>(response, headers, HttpStatus.CREATED);
 
 		return entity;
 	}
