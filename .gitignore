@@ -35,3 +35,5 @@ target/
 
 # SQLite
 *.sqlite
+
+SSS.txt

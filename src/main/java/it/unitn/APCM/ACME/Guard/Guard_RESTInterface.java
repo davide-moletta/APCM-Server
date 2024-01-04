@@ -60,7 +60,7 @@ public class Guard_RESTInterface {
 	 */
 	@GetMapping("/files")
 	public ResponseEntity<String> get_files() {
-				
+
 		log.trace("got a requst for available files");
 		String files = fetch_files(filePath, "");
 
@@ -75,9 +75,9 @@ public class Guard_RESTInterface {
 	 */
 	@GetMapping("/login")
 	public ResponseEntity<String> login(@RequestParam String email, @RequestParam String password) {
-				
+
 		log.trace("got a requst for login from: " + email);
-		
+
 		String loginQuery = "SELECT email FROM Users WHERE email=? AND pass=?";
 		PreparedStatement preparedStatement;
 
@@ -90,9 +90,7 @@ public class Guard_RESTInterface {
 			preparedStatement.setString(2, password);
 			ResultSet rs = preparedStatement.executeQuery();
 
-			if (rs.next()) {
-				response = "authenticated";
-			}
+			if (rs.next()) response = "authenticated";
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
@@ -104,11 +102,11 @@ public class Guard_RESTInterface {
 	}
 
 	/**
-	 * Endpoint to "login" and retrieve a file
+	 * Endpoint to retrieve a file
 	 */
 	@GetMapping("/file")
 	public ResponseEntity<Response> get_file(@RequestParam String email,
-			@RequestParam String pwd,
+			@RequestParam String password,
 			@RequestParam String path) {
 
 		ArrayList<String> groups = null;
@@ -120,7 +118,7 @@ public class Guard_RESTInterface {
 		try {
 			preparedStatement = conn.prepareStatement(userQuery);
 			preparedStatement.setString(1, email);
-			preparedStatement.setString(2, pwd);
+			preparedStatement.setString(2, password);
 			ResultSet rs = preparedStatement.executeQuery();
 
 			while (rs.next()) {

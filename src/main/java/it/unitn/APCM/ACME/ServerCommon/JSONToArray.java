@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 
-
 public class JSONToArray extends ArrayList<String> {
 
 	public JSONToArray(String str) throws JsonProcessingException {
@@ -18,8 +17,7 @@ public class JSONToArray extends ArrayList<String> {
 			} catch (JsonProcessingException e) {
 				throw new RuntimeException(e);
 			}
-		}
-		else {
+		} else {
 			this.clear();
 		}
 

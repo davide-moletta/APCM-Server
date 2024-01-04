@@ -10,6 +10,7 @@ import java.util.HashMap;
 @SpringBootApplication
 public class Guard_RESTApp {
 	private static final Logger log = LoggerFactory.getLogger(Guard_RESTApp.class);
+
 	public static void main(String[] args) {
 		SpringApplication app = new SpringApplication(Guard_RESTApp.class);
 		HashMap<String, Object> properties = new HashMap<String, Object>(2);
