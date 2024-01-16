@@ -19,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import ch.qos.logback.core.model.INamedModel;
+import it.unitn.APCM.ACME.DBManager.DB_RESTApp;
 import it.unitn.APCM.ACME.ServerCommon.ClientResponse;
 import it.unitn.APCM.ACME.ServerCommon.JSONToArray;
 import it.unitn.APCM.ACME.ServerCommon.Response;
@@ -33,8 +34,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 
 import org.apache.commons.io.IOUtils;
+
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.spec.AlgorithmParameterSpec;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -43,6 +48,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.ChaCha20ParameterSpec;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -53,6 +65,13 @@ public class Guard_RESTInterface {
 	private static final String dbServer_url = "http://localhost:8091/api/v1/decryption_key?";
 	private static final String filePath = "src\\main\\java\\it\\unitn\\APCM\\ACME\\Guard\\Files";
 	private static final String fP = "src\\main\\java\\it\\unitn\\APCM\\ACME\\Guard\\";
+	// encryption algorithm
+	// CHECK TYPE OF ENCRYPTION ALGORITHM
+	static final String cipherString = "ChaCha20";
+	// length of key in bytes
+	static final int keyByteLen = 20;
+	// IV length
+	static final int IVLEN = 12;
 
 	private String fetch_files(String path, String files) {
 
@@ -243,7 +262,7 @@ public class Guard_RESTInterface {
 			@RequestParam String password,
 			@RequestParam String path,
 			@RequestBody String newTextToSave) throws IOException {
-				
+
 		ArrayList<String> groups = null;
 		int admin = -1;
 		String userQuery = "SELECT groups, admin FROM Users WHERE email=? AND pass=?";
@@ -326,5 +345,79 @@ public class Guard_RESTInterface {
 		ResponseEntity<String> entity = new ResponseEntity<>(responseString, headers, HttpStatus.CREATED);
 
 		return entity;
+	}
+
+	private byte[] encryptFile(byte[] text, SecretKey encKey) {
+		// check that there is some data to encrypt
+		if (text.length == 0) {
+			log.error("No text to encrypt");
+			return null;
+		}
+		try {
+			// Create the cipher
+			Cipher cipher = Cipher.getInstance(cipherString);
+			// Initialize the cipher for encryption
+			cipher.init(Cipher.ENCRYPT_MODE, encKey);
+
+			// Retrieve the parameters used during encryption
+			// they will be needed for decryption
+			byte[] iv = cipher.getIV();
+
+			// Encrypt the input data
+			byte[] ciphertext = cipher.doFinal(text);
+
+			// set output
+			byte[] encryptedText = new byte[iv.length + ciphertext.length];
+			// first part is the IV
+			System.arraycopy(iv, 0, encryptedText, 0, IVLEN);
+			// second part is the ciphertext
+			System.arraycopy(ciphertext, 0, encryptedText, IVLEN, ciphertext.length);
+
+			log.trace("Encrypted text");
+			return encryptedText;
+
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
+				| BadPaddingException e) {
+			log.error("Encryption failed: " + e);
+			return null;
+		}
+	}
+
+	private byte[] decryptFile(byte[] encText, SecretKey decKey) {
+		// check that there is some data to decrypt
+		if (encText.length == 0) {
+			log.error("No encryption key to decrypt");
+			return null;
+		}
+		try {
+			byte[] text;
+			// Create the cipher
+			Cipher cipher = Cipher.getInstance(cipherString);
+			// Retrieve the parameters used during encryption to properly
+			// initialize the cipher for decryption
+			byte[] iv = new byte[IVLEN];
+			byte[] ciphertext = new byte[encText.length - IVLEN];
+			// first part is the IV
+			System.arraycopy(encText, 0, iv, 0, IVLEN);
+			// second part is the ciphertext
+			System.arraycopy(encText, IVLEN, ciphertext, 0, ciphertext.length);
+			// initialize parameters
+			// !!! this is specific for ChaCha20
+			AlgorithmParameterSpec chachaSpec = new ChaCha20ParameterSpec(iv, 1);
+			// Initialize cipher for decryption
+			cipher.init(Cipher.DECRYPT_MODE, decKey, chachaSpec);
+			// Decrypt the input data
+			text = cipher.doFinal(ciphertext);
+
+			// give feedback
+			log.trace("Key decrypted");
+
+			return text;
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
+				| BadPaddingException | InvalidAlgorithmParameterException e) {
+			// in case of error show error dialog and print to console
+			log.error("Decryption failed");
+			return null;
+		}
 	}
 }
