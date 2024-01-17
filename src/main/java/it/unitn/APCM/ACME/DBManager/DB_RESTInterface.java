@@ -144,13 +144,15 @@ public class DB_RESTInterface {
 				String encryptionKey = null;
 
 				while (rs.next()) {
-					res.set_key(rs.getString("encryption_key"));
-					//encryptionKey = (rs.getString("encryption_key"));
+					//res.set_key(rs.getString("encryption_key"));
+					encryptionKey = (rs.getString("encryption_key"));
 				}
 
-				// if (encryptionKey == "") {
-				// 	res.set_key(new String(decrypt(encryptionKey.getBytes())));
-				// }
+				if (encryptionKey != "") {
+					String k = new String(decrypt(encryptionKey.getBytes()));
+					System.out.println(k);
+				 	res.set_key(k);
+				}
 			} catch (SQLException e) {
 				throw new RuntimeException(e);
 			}
