@@ -55,6 +55,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.ChaCha20ParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -235,12 +236,16 @@ public class Guard_RESTInterface {
 					InputStream in = getClass().getResourceAsStream(path);
 					try {
 						fileContent = IOUtils.toString(in, StandardCharsets.UTF_8);
+						byte[] keyBytes = (res.get_key()).getBytes();
+						SecretKey decK = new SecretKeySpec(keyBytes, 0, keyBytes.length, cipherString);
+						byte[] textDec = decryptFile(fileContent.getBytes(), decK);
+						clientResponse.set_text(new String(textDec));
 						in.close();
 					} catch (IOException e) {
 						// Handle the exception according to your application's logic
 						log.error("Error reading file: " + e.getMessage());
 					}
-					clientResponse.set_text(fileContent);
+					
 				}
 			}
 		} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
@@ -255,7 +260,7 @@ public class Guard_RESTInterface {
 
 
 	/**
-	 * Endpoint to retrieve a file
+	 * Endpoint to save a file
 	 */
 	@PostMapping(value = "/file")
 	public ResponseEntity<String> save_file(@RequestParam String email,
@@ -328,9 +333,12 @@ public class Guard_RESTInterface {
 			if (res != null) {
 				if (res.get_auth()) {
 					if (res.get_w_mode()) {
+						byte[] keyBytes = (res.get_key()).getBytes();
+						SecretKey encK = new SecretKeySpec(keyBytes, 0, keyBytes.length, cipherString);
+						byte[] textEnc = encryptFile(newTextToSave.getBytes(), encK);
 						//Encrypt the file
 						FileOutputStream fOut = new FileOutputStream(fP + path);
-						IOUtils.write(newTextToSave, fOut, StandardCharsets.UTF_8);
+						IOUtils.write(new String(textEnc), fOut, StandardCharsets.UTF_8);
 						fOut.close();
 
 						responseString = "File saved";
