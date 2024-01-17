@@ -64,13 +64,12 @@ public class Guard_RESTInterface {
 	private final Connection conn = Guard_Connection.getDbconn();
 	private static final Logger log = LoggerFactory.getLogger(Guard_RESTInterface.class);
 	private static final String dbServer_url = "http://localhost:8091/api/v1/decryption_key?";
+	private static final String dbServer_url2 = "http://localhost:8091/api/v1/";
 	private static final String filePath = "src\\main\\java\\it\\unitn\\APCM\\ACME\\Guard\\Files";
 	private static final String fP = "src\\main\\java\\it\\unitn\\APCM\\ACME\\Guard\\";
 	// encryption algorithm
 	// CHECK TYPE OF ENCRYPTION ALGORITHM
 	static final String cipherString = "ChaCha20";
-	// length of key in bytes
-	static final int keyByteLen = 20;
 	// IV length
 	static final int IVLEN = 12;
 
@@ -237,8 +236,11 @@ public class Guard_RESTInterface {
 					try {
 						fileContent = IOUtils.toString(in, StandardCharsets.UTF_8);
 						byte[] keyBytes = (res.get_key()).getBytes();
+						//System.out.println("OPEN prima: " + fileContent);
 						SecretKey decK = new SecretKeySpec(keyBytes, 0, keyBytes.length, cipherString);
 						byte[] textDec = decryptFile(fileContent.getBytes(), decK);
+						String t = new String(textDec);
+						//System.out.println("OPEN: " + t);
 						clientResponse.set_text(new String(textDec));
 						in.close();
 					} catch (IOException e) {
@@ -335,12 +337,15 @@ public class Guard_RESTInterface {
 					if (res.get_w_mode()) {
 						byte[] keyBytes = (res.get_key()).getBytes();
 						SecretKey encK = new SecretKeySpec(keyBytes, 0, keyBytes.length, cipherString);
+						//System.out.println("SAVE prima: " + newTextToSave);
 						byte[] textEnc = encryptFile(newTextToSave.getBytes(), encK);
+						String t = new String(textEnc);
+						//System.out.println("SAVE: " + t);
 						//Encrypt the file
 						FileOutputStream fOut = new FileOutputStream(fP + path);
 						IOUtils.write(new String(textEnc), fOut, StandardCharsets.UTF_8);
+						//fOut.flush();
 						fOut.close();
-
 						responseString = "File saved";
 					} 					
 				}
@@ -351,6 +356,116 @@ public class Guard_RESTInterface {
 		
 		HttpHeaders headers = new HttpHeaders();
 		ResponseEntity<String> entity = new ResponseEntity<>(responseString, headers, HttpStatus.CREATED);
+
+		return entity;
+	}
+
+	/**
+	 * Endpoint to create a new file
+	 */
+	@PostMapping(value = "/newFile")
+	public ResponseEntity<String> new_file(@RequestParam String email,
+			@RequestParam String password,
+			@RequestParam String path,
+			@RequestBody String text) throws IOException {
+		ArrayList<String> groups = null;
+		int admin = -1;
+		String userQuery = "SELECT groups, admin FROM Users WHERE email=? AND pass=?";
+		PreparedStatement preparedStatement;
+		
+		// Create the query and retrieve results from user db
+		try {
+			preparedStatement = conn.prepareStatement(userQuery);
+			preparedStatement.setString(1, email);
+			preparedStatement.setString(2, password);
+			ResultSet rs = preparedStatement.executeQuery();
+
+			while (rs.next()) {
+				groups = new JSONToArray(rs.getString("groups"));
+				admin = rs.getInt("admin");
+			}
+		} catch (SQLException | JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
+
+		// transform the array of groups into a string with separator ","
+		String groupsToString = "";
+		if (groups != null) {
+			for (int i = 0; i < groups.size(); i++) {
+				groupsToString = groupsToString.concat(groups.get(i) + ",");
+			}
+			groupsToString = groupsToString.substring(0, groupsToString.length() - 1);
+		}
+
+		// transform the received path into the corresponding hash with SHA-512
+		String path_hash = null;
+		try {
+			MessageDigest md = MessageDigest.getInstance("SHA-512");
+			byte[] bytes = md.digest(path.getBytes(StandardCharsets.UTF_8));
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < bytes.length; i++) {
+				sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
+			}
+			path_hash = sb.toString();
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		}
+
+		// creaft the request to the db interface
+		String DB_request_url = dbServer_url2 + "/newFile?" +
+				"path_hash=" + path_hash +
+				"&path=" + path +
+				"&email=" + email +
+				"&user_groups=" + groupsToString +
+				"&admin=" + admin +
+				"&id=1";
+
+		log.trace("Requesting for: " + DB_request_url);
+
+		String responseString = "Impossible to create a new file";
+
+		// sends the request and capture the response
+		RestTemplate restTemplate = new RestTemplate();
+
+			try {
+			// get the response and decide accordingly
+			Response res = restTemplate.getForEntity(DB_request_url, Response.class).getBody();
+
+			if (res != null) {
+				if (res.get_auth()) {
+					if (res.get_w_mode()) {
+						String[] splittedPath = path.split("/");
+						int indexName = splittedPath.length - 1;
+						String dirPath = "";
+						for(int i = 0; i < indexName; i++){
+							dirPath += "/" + splittedPath[i];
+						}
+						File dir = new File(fP + dirPath);
+						dir.mkdirs();
+						File f = new File(fP + dirPath, splittedPath[indexName]);
+						f.createNewFile();
+						byte[] keyBytes = (res.get_key()).getBytes();
+						SecretKey encK = new SecretKeySpec(keyBytes, 0, keyBytes.length, cipherString);
+						//System.out.println("CREA prima: " + text);
+						byte[] textEnc = encryptFile(text.getBytes(), encK);
+						String t = new String(textEnc);
+						//System.out.println("CREA: " + t);
+						//Encrypt the file
+						FileOutputStream fOut = new FileOutputStream(fP + path);
+						IOUtils.write(new String(textEnc), fOut, StandardCharsets.UTF_8);
+						//fOut.flush();
+						fOut.close();
+						responseString = "File saved";
+					} 					
+				}
+			}
+		} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
+			log.error("Error in the response from DB server");
+		}
+		
+		HttpHeaders headers = new HttpHeaders();
+
+		ResponseEntity<String> entity = new ResponseEntity<>("ok", headers, HttpStatus.CREATED);
 
 		return entity;
 	}
@@ -428,4 +543,6 @@ public class Guard_RESTInterface {
 			return null;
 		}
 	}
+
+	
 }

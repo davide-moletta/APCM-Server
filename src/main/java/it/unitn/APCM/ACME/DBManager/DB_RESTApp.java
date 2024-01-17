@@ -29,8 +29,6 @@ public class DB_RESTApp {
 	// encryption algorithm
 	// CHECK TYPE OF ENCRYPTION ALGORITHM
 	static final String cipherString = "ChaCha20";
-	// length of key in bytes
-	static final int keyByteLen = 20;
 	// IV length
 	static final int IVLEN = 12;
 

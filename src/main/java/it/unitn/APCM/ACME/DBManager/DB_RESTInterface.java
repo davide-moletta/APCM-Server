@@ -43,7 +43,7 @@ public class DB_RESTInterface {
 	// CHECK TYPE OF ENCRYPTION ALGORITHM
 	static final String cipherString = "ChaCha20";
 	// length of key in bytes
-	static final int keyByteLen = 20;
+	static final int keyByteLen = 32;
 	// IV length
 	static final int IVLEN = 12;
 
@@ -144,13 +144,11 @@ public class DB_RESTInterface {
 				String encryptionKey = null;
 
 				while (rs.next()) {
-					//res.set_key(rs.getString("encryption_key"));
 					encryptionKey = (rs.getString("encryption_key"));
 				}
 
 				if (encryptionKey != "") {
 					String k = new String(decrypt(encryptionKey.getBytes()));
-					System.out.println(k);
 				 	res.set_key(k);
 				}
 			} catch (SQLException e) {
@@ -167,7 +165,76 @@ public class DB_RESTInterface {
 		return entity;
 	}
 
-	private static SecretKey getSymmetricKey() {
+	/**
+	 * Endpoint for getting the password of the specified file if authorized
+	 */
+	@GetMapping("/newFile")
+	public ResponseEntity<Response> new_File(@RequestParam(value = "path_hash") String path_hash,
+			@RequestParam(value = "path") String path,
+			@RequestParam(value = "email") String email,
+			@RequestParam(value = "user_groups") String user_group,
+			@RequestParam(value = "admin") String admin,
+			@RequestParam(value = "id") int id) {
+
+		Response res = new Response();
+
+		ArrayList<String> user_groups = new ArrayList<String>(Arrays.asList(user_group.split(",")));
+
+		boolean error = false;
+
+		String getInfoQuery = "SELECT path_hash FROM Files WHERE path_hash = ?";
+		PreparedStatement ps;
+		try {
+			ps = conn.prepareStatement(getInfoQuery);
+			ps.setString(1, path_hash);
+			ResultSet rs = ps.executeQuery();
+			while (rs.next()) {
+				error = true;
+				log.error("File already existing");
+				throw new ResponseStatusException(HttpStatus.CONFLICT, "File already existing");
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+
+		if(error== false){
+			res.set_auth(true);
+			res.set_w_mode(true);
+			res.set_email(email);
+			res.set_path_hash(path_hash);
+			res.set_id(id);
+			//generate new key 
+			SecretKey sK = this.getSymmetricKey();
+			String enc_key = new String(encrypt(sK.getEncoded()));
+			res.set_key(new String(sK.getEncoded()));
+			
+			String insertQuery = "INSERT INTO Files(path_hash, path, owner, rw_groups, r_groups, encryption_key) VALUES (?,?,?,?,?,?)";
+			try {
+				PreparedStatement prepStatement = conn.prepareStatement(insertQuery);
+				prepStatement.setString(1, path_hash);
+				prepStatement.setString(2, path);
+				prepStatement.setString(3, email);
+				prepStatement.setString(4, user_group);
+				prepStatement.setString(5, user_group);
+				prepStatement.setString(6, enc_key);
+
+				int rs = prepStatement.executeUpdate();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} else {
+			res = null;
+		}
+
+		HttpHeaders headers = new HttpHeaders();
+
+		ResponseEntity<Response> entity = new ResponseEntity<>(res, headers, HttpStatus.CREATED);
+
+		return entity;
+	}
+
+	private SecretKey getSymmetricKey() {
 		SecretKey cipherKey = null;
 
 		// if no valid data read from file, create new
