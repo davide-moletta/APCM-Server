@@ -42,13 +42,13 @@ public class JDBC_Connection {
 	/**
 	 * Disconnect from the db_files database
 	 */
-	private void disconnect() {
-		try {
-			if (conn != null) {
-				conn.close();
-			}
-		} catch (SQLException ex) {
-			log.error(ex.getMessage());
-		}
-	}
+	// private void disconnect() {
+	// 	try {
+	// 		if (conn != null) {
+	// 			conn.close();
+	// 		}
+	// 	} catch (SQLException ex) {
+	// 		log.error(ex.getMessage());
+	// 	}
+	// }
 }

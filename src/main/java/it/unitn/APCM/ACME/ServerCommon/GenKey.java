@@ -1,12 +1,9 @@
 package it.unitn.APCM.ACME.ServerCommon;
 
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 
 public class GenKey {
     // encryption algorithm
@@ -28,11 +25,14 @@ public class GenKey {
 			keygen.init(keyByteLen * 8);
 			cipherKey = keygen.generateKey();
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-        return new String(cipherKey.getEncoded());
+        if (cipherKey != null) {
+            return new String(cipherKey.getEncoded());
+        } else {
+            return null;
+        }
     }
 
 }

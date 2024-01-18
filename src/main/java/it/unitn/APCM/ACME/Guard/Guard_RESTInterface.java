@@ -18,20 +18,15 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import ch.qos.logback.core.model.INamedModel;
-import it.unitn.APCM.ACME.DBManager.DB_RESTApp;
 import it.unitn.APCM.ACME.ServerCommon.ClientResponse;
 import it.unitn.APCM.ACME.ServerCommon.JSONToArray;
 import it.unitn.APCM.ACME.ServerCommon.Response;
 
 import java.nio.charset.StandardCharsets;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 
 import org.apache.commons.io.IOUtils;
 
@@ -45,9 +40,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -390,8 +382,6 @@ public class Guard_RESTInterface {
 
 		log.trace("Requesting for: " + DB_request_url);
 
-		String responseString = "Impossible to create a new file";
-
 		// sends the request and capture the response
 		RestTemplate restTemplate = new RestTemplate();
 
@@ -423,7 +413,6 @@ public class Guard_RESTInterface {
 						IOUtils.write(new String(textEnc), fOut, StandardCharsets.UTF_8);
 						//fOut.flush();
 						fOut.close();
-						responseString = "File saved";
 					} 					
 				}
 			}

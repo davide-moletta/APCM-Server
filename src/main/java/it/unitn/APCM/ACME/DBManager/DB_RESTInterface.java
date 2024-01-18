@@ -147,7 +147,7 @@ public class DB_RESTInterface {
 					encryptionKey = (rs.getString("encryption_key"));
 				}
 
-				if (encryptionKey != "") {
+				if (encryptionKey != "" && encryptionKey != null) {
 					System.out.println("CHIAVE CIFRATA LETTURA: " + encryptionKey);
 					String k = new String(decrypt(encryptionKey.getBytes()));
 					System.out.println("CHIAVE: " + k);
@@ -179,8 +179,6 @@ public class DB_RESTInterface {
 			@RequestParam(value = "id") int id) {
 
 		Response res = new Response();
-
-		ArrayList<String> user_groups = new ArrayList<String>(Arrays.asList(user_group.split(",")));
 
 		boolean error = false;
 
@@ -222,9 +220,8 @@ public class DB_RESTInterface {
 				prepStatement.setString(5, user_group);
 				prepStatement.setString(6, enc_key);
 
-				int rs = prepStatement.executeUpdate();
+				prepStatement.executeUpdate();
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		} else {
