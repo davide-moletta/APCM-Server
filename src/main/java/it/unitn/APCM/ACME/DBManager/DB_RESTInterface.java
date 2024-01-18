@@ -150,7 +150,7 @@ public class DB_RESTInterface {
 				if (encryptionKey != "" && encryptionKey != null) {
 					System.out.println("CHIAVE CIFRATA LETTURA: " + encryptionKey);
 					String k = new String(decrypt(encryptionKey.getBytes()));
-					System.out.println("CHIAVE: " + k);
+					System.out.println("CHIAVE LETTA: " + k);
 				 	res.set_key(k);
 				}
 			} catch (SQLException e) {
@@ -205,7 +205,7 @@ public class DB_RESTInterface {
 			res.set_id(id);
 			//generate new key 
 			SecretKey sK = this.getSymmetricKey();
-			System.out.println("CHAIVE CREATA: " + new String(sK.getEncoded()));
+			System.out.println("CHIAVE CREATA: " + new String(sK.getEncoded()));
 			String enc_key = new String(encrypt(sK.getEncoded()));
 			System.out.println("CHIAVE CIFRATA: " + enc_key);
 			res.set_key(new String(sK.getEncoded()));
