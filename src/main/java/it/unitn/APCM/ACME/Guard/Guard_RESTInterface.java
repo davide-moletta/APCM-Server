@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -64,6 +65,7 @@ public class Guard_RESTInterface {
 	static final String cipherString = "ChaCha20";
 	// IV length
 	static final int IVLEN = 12;
+	Argon2PasswordEncoder encoder = new Argon2PasswordEncoder(32, 64, 1, 15 * 1024, 2);
 
 	private String fetch_files(String path, String files) {
 
@@ -98,6 +100,38 @@ public class Guard_RESTInterface {
 	}
 
 	/**
+	 * Endpoint to create a new user
+	 */
+	@GetMapping("/newUser")
+	public void createUser(@RequestParam String email, @RequestParam String password,
+			@RequestParam String groups, @RequestParam int admin) {
+
+		log.trace("got a requst to create a new user");
+			
+		// generate hash with argon2
+		String encoded_password = encoder.encode(password);
+		System.out.println("generated pass: " + encoded_password);
+
+		// format groups
+		groups = groups.replace(",", "\",\"");
+		groups = "[\"" + groups + "\"]";
+		System.out.println(groups);
+
+		String insertQuery = "INSERT INTO Users(email, pass, groups, admin) VALUES (?,?,?,?)";
+		try {
+			PreparedStatement prepStatement = conn.prepareStatement(insertQuery);
+			prepStatement.setString(1, email);
+			prepStatement.setString(2, encoded_password);
+			prepStatement.setString(3, groups);
+			prepStatement.setInt(4, admin);
+
+			prepStatement.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
 	 * Endpoint to login
 	 */
 	@GetMapping("/login")
@@ -105,22 +139,29 @@ public class Guard_RESTInterface {
 
 		log.trace("got a requst for login from: " + email);
 
-		String loginQuery = "SELECT email FROM Users WHERE email=? AND pass=?";
+		String loginQuery = "SELECT pass FROM Users WHERE email=?";
 		PreparedStatement preparedStatement;
 
-		String response = "not authenticated";
+		String stored_password = "";
 
 		// Create the query and retrieve results from user db
 		try {
 			preparedStatement = conn.prepareStatement(loginQuery);
 			preparedStatement.setString(1, email);
-			preparedStatement.setString(2, password);
 			ResultSet rs = preparedStatement.executeQuery();
 
 			if (rs.next())
-				response = "authenticated";
+				stored_password = rs.getString("pass");
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
+		}
+
+		// check if the password is valid with argon2
+		boolean validPassword = encoder.matches(password, stored_password);
+
+		String response = "not authenticated";
+		if (validPassword) {
+			response = "authenticated";
 		}
 
 		HttpHeaders headers = new HttpHeaders();
@@ -210,14 +251,14 @@ public class Guard_RESTInterface {
 						// può scrivere
 						response.set_w_mode(true);
 						clientResponse.set_w_mode(true);
-					} 
+					}
 
 					// decript del file con chiave
 					InputStream in = getClass().getResourceAsStream(path);
 					try {
 						fileContent = IOUtils.toString(in, StandardCharsets.UTF_8);
 						byte[] keyBytes = (res.get_key()).getBytes();
-					 	System.out.println("OPEN prima: " + fileContent);
+						System.out.println("OPEN prima: " + fileContent);
 						SecretKey decK = new SecretKeySpec(keyBytes, 0, keyBytes.length, cipherString);
 						byte[] textDec = decryptFile(fileContent.getBytes(), decK);
 						String t = new String(textDec);
@@ -228,7 +269,7 @@ public class Guard_RESTInterface {
 						// Handle the exception according to your application's logic
 						log.error("Error reading file: " + e.getMessage());
 					}
-					
+
 				}
 			}
 		} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
@@ -240,7 +281,6 @@ public class Guard_RESTInterface {
 
 		return entity;
 	}
-
 
 	/**
 	 * Endpoint to save a file
@@ -282,7 +322,6 @@ public class Guard_RESTInterface {
 
 		// transform the received path into the corresponding hash with SHA-512
 		String path_hash = getPathHash(path);
-		
 
 		// creaft the request to the db interface
 		String DB_request_url = dbServer_url +
@@ -299,7 +338,7 @@ public class Guard_RESTInterface {
 		// sends the request and capture the response
 		RestTemplate restTemplate = new RestTemplate();
 
-			try {
+		try {
 			// get the response and decide accordingly
 			Response res = restTemplate.getForEntity(DB_request_url, Response.class).getBody();
 
@@ -312,19 +351,19 @@ public class Guard_RESTInterface {
 						byte[] textEnc = encryptFile(newTextToSave.getBytes(), encK);
 						String t = new String(textEnc);
 						System.out.println("SAVE: " + t);
-						//Encrypt the file
+						// Encrypt the file
 						FileOutputStream fOut = new FileOutputStream(fP + path);
 						IOUtils.write(new String(textEnc), fOut, StandardCharsets.UTF_8);
-						//fOut.flush();
+						// fOut.flush();
 						fOut.close();
 						responseString = "File saved";
-					} 					
+					}
 				}
 			}
 		} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
 			log.error("Error in the response from DB server");
 		}
-		
+
 		HttpHeaders headers = new HttpHeaders();
 		ResponseEntity<String> entity = new ResponseEntity<>(responseString, headers, HttpStatus.CREATED);
 
@@ -343,7 +382,7 @@ public class Guard_RESTInterface {
 		int admin = -1;
 		String userQuery = "SELECT groups, admin FROM Users WHERE email=? AND pass=?";
 		PreparedStatement preparedStatement;
-		
+
 		// Create the query and retrieve results from user db
 		try {
 			preparedStatement = conn.prepareStatement(userQuery);
@@ -385,7 +424,7 @@ public class Guard_RESTInterface {
 		// sends the request and capture the response
 		RestTemplate restTemplate = new RestTemplate();
 
-			try {
+		try {
 			// get the response and decide accordingly
 			Response res = restTemplate.getForEntity(DB_request_url, Response.class).getBody();
 
@@ -395,7 +434,7 @@ public class Guard_RESTInterface {
 						String[] splittedPath = path.split("/");
 						int indexName = splittedPath.length - 1;
 						String dirPath = "";
-						for(int i = 0; i < indexName; i++){
+						for (int i = 0; i < indexName; i++) {
 							dirPath += "/" + splittedPath[i];
 						}
 						File dir = new File(fP + dirPath);
@@ -408,18 +447,18 @@ public class Guard_RESTInterface {
 						byte[] textEnc = encryptFile(text.getBytes(), encK);
 						String t = new String(textEnc);
 						System.out.println("CREA: " + t);
-						//Encrypt the file
+						// Encrypt the file
 						FileOutputStream fOut = new FileOutputStream(fP + path);
 						IOUtils.write(new String(textEnc), fOut, StandardCharsets.UTF_8);
-						//fOut.flush();
+						// fOut.flush();
 						fOut.close();
-					} 					
+					}
 				}
 			}
 		} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
 			log.error("Error in the response from DB server");
 		}
-		
+
 		HttpHeaders headers = new HttpHeaders();
 
 		ResponseEntity<String> entity = new ResponseEntity<>("ok", headers, HttpStatus.CREATED);
@@ -427,7 +466,7 @@ public class Guard_RESTInterface {
 		return entity;
 	}
 
-	private String getPathHash(String path){
+	private String getPathHash(String path) {
 		try {
 			MessageDigest md = MessageDigest.getInstance("SHA-512");
 			byte[] bytes = md.digest(path.getBytes(StandardCharsets.UTF_8));
@@ -438,7 +477,7 @@ public class Guard_RESTInterface {
 			return sb.toString();
 		} catch (NoSuchAlgorithmException e) {
 			return "";
-			//throw new RuntimeException(e);
+			// throw new RuntimeException(e);
 		}
 	}
 
@@ -516,5 +555,4 @@ public class Guard_RESTInterface {
 		}
 	}
 
-	
 }
