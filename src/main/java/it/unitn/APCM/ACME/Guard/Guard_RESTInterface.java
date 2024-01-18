@@ -19,7 +19,9 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import it.unitn.APCM.ACME.DBManager.DB_RESTApp;
 import it.unitn.APCM.ACME.ServerCommon.ClientResponse;
+import it.unitn.APCM.ACME.ServerCommon.CryptographyPrimitive;
 import it.unitn.APCM.ACME.ServerCommon.JSONToArray;
 import it.unitn.APCM.ACME.ServerCommon.Response;
 
@@ -35,6 +37,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -48,6 +51,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.ChaCha20ParameterSpec;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 @RestController
@@ -62,9 +66,8 @@ public class Guard_RESTInterface {
 	private static final String fP = "src\\main\\java\\it\\unitn\\APCM\\ACME\\Guard\\";
 	// encryption algorithm
 	// CHECK TYPE OF ENCRYPTION ALGORITHM
-	static final String cipherString = "ChaCha20";
-	// IV length
-	static final int IVLEN = 12;
+	static final String algorithm = "AES";
+	
 	Argon2PasswordEncoder encoder = new Argon2PasswordEncoder(32, 64, 1, 15 * 1024, 2);
 
 	private String fetch_files(String path, String files) {
@@ -259,8 +262,8 @@ public class Guard_RESTInterface {
 						fileContent = IOUtils.toString(in, StandardCharsets.UTF_8);
 						byte[] keyBytes = (res.get_key()).getBytes();
 						System.out.println("OPEN prima: " + fileContent);
-						SecretKey decK = new SecretKeySpec(keyBytes, 0, keyBytes.length, cipherString);
-						byte[] textDec = decryptFile(fileContent.getBytes(), decK);
+						SecretKey decK = new SecretKeySpec(keyBytes, 0, keyBytes.length, algorithm);
+						byte[] textDec = (new CryptographyPrimitive()).decrypt(fileContent.getBytes(), decK);
 						String t = new String(textDec);
 						System.out.println("OPEN: " + t);
 						clientResponse.set_text(new String(textDec));
@@ -346,9 +349,9 @@ public class Guard_RESTInterface {
 				if (res.get_auth()) {
 					if (res.get_w_mode()) {
 						byte[] keyBytes = (res.get_key()).getBytes();
-						SecretKey encK = new SecretKeySpec(keyBytes, 0, keyBytes.length, cipherString);
+						SecretKey encK = new SecretKeySpec(keyBytes, 0, keyBytes.length, algorithm);
 						System.out.println("SAVE prima: " + newTextToSave);
-						byte[] textEnc = encryptFile(newTextToSave.getBytes(), encK);
+						byte[] textEnc = (new CryptographyPrimitive()).encrypt(newTextToSave.getBytes(), encK);
 						String t = new String(textEnc);
 						System.out.println("SAVE: " + t);
 						// Encrypt the file
@@ -442,9 +445,9 @@ public class Guard_RESTInterface {
 						File f = new File(fP + dirPath, splittedPath[indexName]);
 						f.createNewFile();
 						byte[] keyBytes = (res.get_key()).getBytes();
-						SecretKey encK = new SecretKeySpec(keyBytes, 0, keyBytes.length, cipherString);
+						SecretKey encK = new SecretKeySpec(keyBytes, 0, keyBytes.length, algorithm);
 						System.out.println("CREA prima: " + text);
-						byte[] textEnc = encryptFile(text.getBytes(), encK);
+						byte[] textEnc = (new CryptographyPrimitive()).encrypt(text.getBytes(), encK);
 						String t = new String(textEnc);
 						System.out.println("CREA: " + t);
 						// Encrypt the file
@@ -480,79 +483,4 @@ public class Guard_RESTInterface {
 			// throw new RuntimeException(e);
 		}
 	}
-
-	private byte[] encryptFile(byte[] text, SecretKey encKey) {
-		// check that there is some data to encrypt
-		if (text.length == 0) {
-			log.error("No text to encrypt");
-			return null;
-		}
-		try {
-			// Create the cipher
-			Cipher cipher = Cipher.getInstance(cipherString);
-			// Initialize the cipher for encryption
-			cipher.init(Cipher.ENCRYPT_MODE, encKey);
-
-			// Retrieve the parameters used during encryption
-			// they will be needed for decryption
-			byte[] iv = cipher.getIV();
-
-			// Encrypt the input data
-			byte[] ciphertext = cipher.doFinal(text);
-
-			// set output
-			byte[] encryptedText = new byte[iv.length + ciphertext.length];
-			// first part is the IV
-			System.arraycopy(iv, 0, encryptedText, 0, IVLEN);
-			// second part is the ciphertext
-			System.arraycopy(ciphertext, 0, encryptedText, IVLEN, ciphertext.length);
-
-			log.trace("Encrypted text");
-			return encryptedText;
-
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
-				| BadPaddingException e) {
-			log.error("Encryption failed: " + e);
-			return null;
-		}
-	}
-
-	private byte[] decryptFile(byte[] encText, SecretKey decKey) {
-		// check that there is some data to decrypt
-		if (encText.length == 0) {
-			log.error("No encryption key to decrypt");
-			return null;
-		}
-		try {
-			byte[] text;
-			// Create the cipher
-			Cipher cipher = Cipher.getInstance(cipherString);
-			// Retrieve the parameters used during encryption to properly
-			// initialize the cipher for decryption
-			byte[] iv = new byte[IVLEN];
-			byte[] ciphertext = new byte[encText.length - IVLEN];
-			// first part is the IV
-			System.arraycopy(encText, 0, iv, 0, IVLEN);
-			// second part is the ciphertext
-			System.arraycopy(encText, IVLEN, ciphertext, 0, ciphertext.length);
-			// initialize parameters
-			// !!! this is specific for ChaCha20
-			AlgorithmParameterSpec chachaSpec = new ChaCha20ParameterSpec(iv, 1);
-			// Initialize cipher for decryption
-			cipher.init(Cipher.DECRYPT_MODE, decKey, chachaSpec);
-			// Decrypt the input data
-			text = cipher.doFinal(ciphertext);
-
-			// give feedback
-			log.trace("Key decrypted");
-
-			return text;
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
-				| BadPaddingException | InvalidAlgorithmParameterException e) {
-			// in case of error show error dialog and print to console
-			log.error("Decryption failed");
-			return null;
-		}
-	}
-
 }

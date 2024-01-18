@@ -205,6 +205,6 @@ public class Shamir {
 	
 		byte[] secretByte = this.join(keys);
 		//CHECK ENCRYPTION ALGORITHM
-		return new SecretKeySpec(secretByte, 0, secretByte.length, "chacha20"); 
+		return new SecretKeySpec(secretByte, 0, secretByte.length, "AES"); 
 	}
 }
