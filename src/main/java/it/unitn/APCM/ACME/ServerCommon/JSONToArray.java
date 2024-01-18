@@ -20,7 +20,5 @@ public class JSONToArray extends ArrayList<String> {
 		} else {
 			this.clear();
 		}
-
 	}
-
 }

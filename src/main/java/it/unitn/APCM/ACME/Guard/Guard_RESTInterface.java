@@ -175,18 +175,7 @@ public class Guard_RESTInterface {
 		}
 
 		// transform the received path into the corresponding hash with SHA-512
-		String path_hash = null;
-		try {
-			MessageDigest md = MessageDigest.getInstance("SHA-512");
-			byte[] bytes = md.digest(path.getBytes(StandardCharsets.UTF_8));
-			StringBuilder sb = new StringBuilder();
-			for (int i = 0; i < bytes.length; i++) {
-				sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
-			}
-			path_hash = sb.toString();
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
-		}
+		String path_hash = getPathHash(path);
 
 		// creaft the request to the db interface
 		String DB_request_url = dbServer_url +
@@ -236,11 +225,11 @@ public class Guard_RESTInterface {
 					try {
 						fileContent = IOUtils.toString(in, StandardCharsets.UTF_8);
 						byte[] keyBytes = (res.get_key()).getBytes();
-						//System.out.println("OPEN prima: " + fileContent);
+					 	System.out.println("OPEN prima: " + fileContent);
 						SecretKey decK = new SecretKeySpec(keyBytes, 0, keyBytes.length, cipherString);
 						byte[] textDec = decryptFile(fileContent.getBytes(), decK);
 						String t = new String(textDec);
-						//System.out.println("OPEN: " + t);
+						System.out.println("OPEN: " + t);
 						clientResponse.set_text(new String(textDec));
 						in.close();
 					} catch (IOException e) {
@@ -300,18 +289,8 @@ public class Guard_RESTInterface {
 		}
 
 		// transform the received path into the corresponding hash with SHA-512
-		String path_hash = null;
-		try {
-			MessageDigest md = MessageDigest.getInstance("SHA-512");
-			byte[] bytes = md.digest(path.getBytes(StandardCharsets.UTF_8));
-			StringBuilder sb = new StringBuilder();
-			for (int i = 0; i < bytes.length; i++) {
-				sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
-			}
-			path_hash = sb.toString();
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
-		}
+		String path_hash = getPathHash(path);
+		
 
 		// creaft the request to the db interface
 		String DB_request_url = dbServer_url +
@@ -337,10 +316,10 @@ public class Guard_RESTInterface {
 					if (res.get_w_mode()) {
 						byte[] keyBytes = (res.get_key()).getBytes();
 						SecretKey encK = new SecretKeySpec(keyBytes, 0, keyBytes.length, cipherString);
-						//System.out.println("SAVE prima: " + newTextToSave);
+						System.out.println("SAVE prima: " + newTextToSave);
 						byte[] textEnc = encryptFile(newTextToSave.getBytes(), encK);
 						String t = new String(textEnc);
-						//System.out.println("SAVE: " + t);
+						System.out.println("SAVE: " + t);
 						//Encrypt the file
 						FileOutputStream fOut = new FileOutputStream(fP + path);
 						IOUtils.write(new String(textEnc), fOut, StandardCharsets.UTF_8);
@@ -398,18 +377,7 @@ public class Guard_RESTInterface {
 		}
 
 		// transform the received path into the corresponding hash with SHA-512
-		String path_hash = null;
-		try {
-			MessageDigest md = MessageDigest.getInstance("SHA-512");
-			byte[] bytes = md.digest(path.getBytes(StandardCharsets.UTF_8));
-			StringBuilder sb = new StringBuilder();
-			for (int i = 0; i < bytes.length; i++) {
-				sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
-			}
-			path_hash = sb.toString();
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
-		}
+		String path_hash = getPathHash(path);
 
 		// creaft the request to the db interface
 		String DB_request_url = dbServer_url2 + "/newFile?" +
@@ -446,10 +414,10 @@ public class Guard_RESTInterface {
 						f.createNewFile();
 						byte[] keyBytes = (res.get_key()).getBytes();
 						SecretKey encK = new SecretKeySpec(keyBytes, 0, keyBytes.length, cipherString);
-						//System.out.println("CREA prima: " + text);
+						System.out.println("CREA prima: " + text);
 						byte[] textEnc = encryptFile(text.getBytes(), encK);
 						String t = new String(textEnc);
-						//System.out.println("CREA: " + t);
+						System.out.println("CREA: " + t);
 						//Encrypt the file
 						FileOutputStream fOut = new FileOutputStream(fP + path);
 						IOUtils.write(new String(textEnc), fOut, StandardCharsets.UTF_8);
@@ -468,6 +436,21 @@ public class Guard_RESTInterface {
 		ResponseEntity<String> entity = new ResponseEntity<>("ok", headers, HttpStatus.CREATED);
 
 		return entity;
+	}
+
+	private String getPathHash(String path){
+		try {
+			MessageDigest md = MessageDigest.getInstance("SHA-512");
+			byte[] bytes = md.digest(path.getBytes(StandardCharsets.UTF_8));
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < bytes.length; i++) {
+				sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
+			}
+			return sb.toString();
+		} catch (NoSuchAlgorithmException e) {
+			return "";
+			//throw new RuntimeException(e);
+		}
 	}
 
 	private byte[] encryptFile(byte[] text, SecretKey encKey) {
