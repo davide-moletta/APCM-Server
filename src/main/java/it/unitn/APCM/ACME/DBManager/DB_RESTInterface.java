@@ -17,25 +17,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.spec.AlgorithmParameterSpec;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
-import javax.crypto.spec.ChaCha20ParameterSpec;
-import javax.crypto.spec.GCMParameterSpec;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -205,6 +193,8 @@ public class DB_RESTInterface {
 			System.out.println("CHIAVE CREATA: " + new String(sK.getEncoded()));
 			String enc_key = new String((new CryptographyPrimitive()).encrypt(sK.getEncoded(), DB_RESTApp.masterKey));
 			System.out.println("CHIAVE CIFRATA: " + enc_key);
+			String dec = new String((new CryptographyPrimitive()).decrypt(enc_key.getBytes(), DB_RESTApp.masterKey));
+			System.out.println("Decifrata: " + dec);
 			res.set_key(new String(sK.getEncoded()));
 			
 			String insertQuery = "INSERT INTO Files(path_hash, path, owner, rw_groups, r_groups, encryption_key) VALUES (?,?,?,?,?,?)";

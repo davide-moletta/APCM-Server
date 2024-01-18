@@ -4,21 +4,7 @@ import javax.crypto.SecretKey;
 
 import it.unitn.APCM.ACME.DBManager.SSS.Shamir;
 import it.unitn.APCM.ACME.ServerCommon.CryptographyPrimitive;
-
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.spec.AlgorithmParameterSpec;
 import java.util.ArrayList;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.ChaCha20ParameterSpec;
-import javax.crypto.spec.GCMParameterSpec;
 
 public class test {
     static SecretKey masterKey;

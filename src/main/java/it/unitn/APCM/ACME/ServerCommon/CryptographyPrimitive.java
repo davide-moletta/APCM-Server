@@ -66,7 +66,7 @@ public class CryptographyPrimitive {
 
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
                 | BadPaddingException | InvalidAlgorithmParameterException e) {
-            //System.out.println(e);
+            System.out.println(e);
             return null;
         }
     }
@@ -90,9 +90,7 @@ public class CryptographyPrimitive {
             // second part is the ciphertext
             System.arraycopy(encText, IVLEN, ciphertext, 0, ciphertext.length);
             // initialize parameters
-            // !!! this is specific for ChaCha20
             GCMParameterSpec spec = new GCMParameterSpec(IVLEN * java.lang.Byte.SIZE, iv);
-            //AlgorithmParameterSpec chachaSpec = new ChaCha20ParameterSpec(iv, 1);
             // Initialize cipher for decryption
             cipher.init(Cipher.DECRYPT_MODE, key, spec);
             // Decrypt the input data
@@ -101,6 +99,7 @@ public class CryptographyPrimitive {
             return decText;
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
                 | BadPaddingException | InvalidAlgorithmParameterException e) {
+            System.out.println(e);
             return null;
         }
     }
