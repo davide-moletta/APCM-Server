@@ -11,6 +11,11 @@ import java.util.Map;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import it.unitn.APCM.ACME.DBManager.DB_RESTInterface;
+
 public class generateSSSKey {
     // CHECK TYPE OF ENCRYPTION ALGORITHM
 	static final String cipherString = "AES";
@@ -19,6 +24,7 @@ public class generateSSSKey {
 	static final int keyByteLen = 32;
 	// IV length
 	static final int IVLEN = 12;
+	private static final Logger log = LoggerFactory.getLogger(DB_RESTInterface.class);
 
 
     public static void main(String[] args) {
@@ -37,7 +43,7 @@ public class generateSSSKey {
 			keygen.init(keyByteLen * 8);
 			cipherKey = keygen.generateKey();
 		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
+			log.error("Error in generating the master key");
 		}
 		
 		System.out.println("new key generated: ");
@@ -73,7 +79,7 @@ public class generateSSSKey {
 			System.out.println(new String(key));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Error in saving the keys in the file");
 		}
 		
 		SecureRandom secRandom = new SecureRandom();

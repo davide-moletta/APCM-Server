@@ -13,6 +13,11 @@ import java.util.StringJoiner;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import it.unitn.APCM.ACME.DBManager.DB_RESTInterface;
+
 /**
  * An implementation of Shamir's Secret Sharing over {@code GF(256)} to securely split secrets into
  * {@code N} parts, of which any {@code K} can be joined to recover the original secret.
@@ -37,6 +42,7 @@ public class Shamir {
   private SecureRandom random;
   private int n;
   private int k;
+  private static final Logger log = LoggerFactory.getLogger(DB_RESTInterface.class);
 
   
   public Shamir(SecureRandom random, int n, int k) {
@@ -192,7 +198,7 @@ public class Shamir {
 			k4 = parse(seedString[4]);
 			k5 = parse(seedString[5]);
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("Impossible to retrieve the keys");
 		}
 		this.random = new SecureRandom(seed);	
 		

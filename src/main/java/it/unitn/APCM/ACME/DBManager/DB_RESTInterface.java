@@ -50,7 +50,7 @@ public class DB_RESTInterface {
 				res.put("path", rs.getString("path"));
 			}
 		} catch (SQLException e) {
-			throw new RuntimeException(e);
+			log.error("Impossible retrieving the files");
 		}
 		return res;
 	}
@@ -194,7 +194,7 @@ public class DB_RESTInterface {
 
 				res = "success";
 			} catch (SQLException e) {
-				e.printStackTrace();
+				log.error("Error in inserting file in the db. Path_hash is not uniques");
 			}
 		}
 
