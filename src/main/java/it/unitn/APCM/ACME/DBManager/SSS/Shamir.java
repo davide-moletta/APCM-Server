@@ -1,6 +1,7 @@
 package it.unitn.APCM.ACME.DBManager.SSS;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
@@ -180,7 +181,7 @@ public class Shamir {
 		return bytes;
 	}
 
-	public SecretKey getMasterSecret(){
+	public SecretKey getMasterSecret(String path) throws IOException {
 		byte[] seed = null;
 		byte[] k1 = null;
 		byte[] k2 = null;
@@ -189,7 +190,7 @@ public class Shamir {
 		byte[] k5 = null;
 
 		try {
-			String content = new String(Files.readAllBytes(Paths.get("SSS.txt")));
+			String content = Files.readString(Paths.get(path), StandardCharsets.UTF_8);
 			String[] seedString = (content.split(";"));
 			seed = parse(seedString[0]);
 			k1 = parse(seedString[1]);
@@ -199,6 +200,7 @@ public class Shamir {
 			k5 = parse(seedString[5]);
 		} catch (IOException e) {
 			log.error("Impossible to retrieve the keys");
+			throw e;
 		}
 		this.random = new SecureRandom(seed);	
 		
