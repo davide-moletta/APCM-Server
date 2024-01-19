@@ -62,15 +62,9 @@ public class DB_RESTInterface {
 	public ResponseEntity<Response> get_key(@RequestParam(value = "path_hash") String path_hash,
 			@RequestParam(value = "email") String email,
 			@RequestParam(value = "user_groups") String user_group,
-			@RequestParam(value = "admin") String admin,
-			@RequestParam(value = "id") int id) {
+			@RequestParam(value = "admin") String admin) {
 				
-		Response res = new Response();
-		res.set_auth(false);
-		res.set_w_mode(false);
-		res.set_email(email);
-		res.set_path_hash(path_hash);
-		res.set_id(id);
+		Response res = new Response(path_hash, email, false, false, null);
 		ArrayList<String> user_groups = new ArrayList<String>(Arrays.asList(user_group.split(",")));
 
 		String getInfoQuery = "SELECT path_hash, owner, rw_groups, r_groups FROM Files WHERE path_hash = ?";
@@ -153,16 +147,14 @@ public class DB_RESTInterface {
 	 * Endpoint for getting the password of the specified file if authorized
 	 */
 	@GetMapping("/newFile")
-	public ResponseEntity<Response> new_File(@RequestParam(value = "path_hash") String path_hash,
+	public ResponseEntity<String> new_File(@RequestParam(value = "path_hash") String path_hash,
 			@RequestParam(value = "path") String path,
 			@RequestParam(value = "email") String email,
-			@RequestParam(value = "user_groups") String user_group,
-			@RequestParam(value = "admin") String admin,
-			@RequestParam(value = "id") int id) {
-
-		Response res = new Response();
+			@RequestParam(value = "r_groups") String r_groups,
+			@RequestParam(value = "rw_groups") String rw_groups) {
 
 		boolean error = false;
+		String res = "error";
 
 		String getInfoQuery = "SELECT path_hash FROM Files WHERE path_hash = ?";
 		PreparedStatement ps;
@@ -179,16 +171,10 @@ public class DB_RESTInterface {
 			throw new RuntimeException(e);
 		}
 
-		if(error== false){
-			res.set_auth(true);
-			res.set_w_mode(true);
-			res.set_email(email);
-			res.set_path_hash(path_hash);
-			res.set_id(id);
+		if(!error){
 			//generate new key 
 			SecretKey sK = (new CryptographyPrimitive()).getSymmetricKey();
 			byte[] enc_key = (new CryptographyPrimitive()).encrypt(sK.getEncoded(), DB_RESTApp.masterKey);
-			res.set_key(sK.getEncoded());
 			
 			String insertQuery = "INSERT INTO Files(path_hash, path, owner, rw_groups, r_groups, encryption_key) VALUES (?,?,?,?,?,?)";
 			try {
@@ -196,21 +182,21 @@ public class DB_RESTInterface {
 				prepStatement.setString(1, path_hash);
 				prepStatement.setString(2, path);
 				prepStatement.setString(3, email);
-				prepStatement.setString(4, user_group);
-				prepStatement.setString(5, user_group);
+				prepStatement.setString(4, rw_groups);
+				prepStatement.setString(5, r_groups);
 				prepStatement.setBytes(6, enc_key);
 
 				prepStatement.executeUpdate();
+
+				res = "success";
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
-		} else {
-			res = null;
 		}
 
 		HttpHeaders headers = new HttpHeaders();
 
-		ResponseEntity<Response> entity = new ResponseEntity<>(res, headers, HttpStatus.CREATED);
+		ResponseEntity<String> entity = new ResponseEntity<>(res, headers, HttpStatus.CREATED);
 
 		return entity;
 	}

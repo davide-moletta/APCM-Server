@@ -37,7 +37,6 @@ public class generateSSSKey {
 			keygen.init(keyByteLen * 8);
 			cipherKey = keygen.generateKey();
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		

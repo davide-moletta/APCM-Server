@@ -1,18 +1,23 @@
 package it.unitn.APCM.ACME.ServerCommon;
 
 public class Response {
-    int id;
     String path_hash;
     String email;
     boolean w_mode;
     boolean auth;
     byte[] key;
 
+    public Response(String path_hash, String email, boolean w_mode, boolean auth, byte[] key) {
+        this.path_hash = path_hash;
+        this.email = email;
+        this.w_mode = w_mode;
+        this.auth = auth;
+        this.key = key;
+    }
+
     /*
      * SETTER
      */
-    public void set_id(int id) {this.id = id;}
-
     public void set_path_hash(String path_hash) {this.path_hash = path_hash;}
 
     public void set_email(String email) {this.email = email;}
@@ -26,8 +31,6 @@ public class Response {
     /*
      * GETTER
      */
-    public int get_id() {return this.id;}
-
     public String get_path_hash() {return this.path_hash;}
 
     public String get_email() {return this.email;}

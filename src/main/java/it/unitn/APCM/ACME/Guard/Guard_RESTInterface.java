@@ -19,7 +19,6 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import it.unitn.APCM.ACME.DBManager.DB_RESTApp;
 import it.unitn.APCM.ACME.ServerCommon.ClientResponse;
 import it.unitn.APCM.ACME.ServerCommon.CryptographyPrimitive;
 import it.unitn.APCM.ACME.ServerCommon.JSONToArray;
@@ -32,9 +31,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Writer;
-
-import org.apache.commons.io.IOUtils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -56,9 +52,8 @@ public class Guard_RESTInterface {
 	private static final String dbServer_url = "http://localhost:8091/api/v1/";
 	private static final String fP = "src\\main\\java\\it\\unitn\\APCM\\ACME\\Guard\\";
 	// encryption algorithm
-	// CHECK TYPE OF ENCRYPTION ALGORITHM
 	static final String algorithm = "AES";
-	
+
 	Argon2PasswordEncoder encoder = new Argon2PasswordEncoder(32, 64, 1, 15 * 1024, 2);
 
 	private String fetch_files(String path, String files) {
@@ -69,7 +64,7 @@ public class Guard_RESTInterface {
 		for (String content : contents) {
 			if (content.contains(".")) {
 				// is a file
-				files = files.concat(path + "/" + content + "\n");
+				files = files.concat(path + "/" + content + ",");
 			} else {
 				// is a directory
 				files = files.concat(fetch_files(path + "/" + content, ""));
@@ -85,7 +80,7 @@ public class Guard_RESTInterface {
 	public ResponseEntity<String> get_files() {
 
 		log.trace("got a requst for available files");
-		String files = fetch_files(fP+"Files", "");
+		String files = fetch_files(fP + "Files", "");
 
 		HttpHeaders headers = new HttpHeaders();
 		ResponseEntity<String> entity = new ResponseEntity<>(files, headers, HttpStatus.CREATED);
@@ -101,15 +96,15 @@ public class Guard_RESTInterface {
 			@RequestParam String groups, @RequestParam int admin) {
 
 		log.trace("got a requst to create a new user");
-			
+
 		// generate hash with argon2
 		String encoded_password = encoder.encode(password);
-		//System.out.println("generated pass: " + encoded_password);
+		// System.out.println("generated pass: " + encoded_password);
 
 		// format groups
 		groups = groups.replace(",", "\",\"");
 		groups = "[\"" + groups + "\"]";
-		//System.out.println(groups);
+		// System.out.println(groups);
 
 		String insertQuery = "INSERT INTO Users(email, pass, groups, admin) VALUES (?,?,?,?)";
 		try {
@@ -131,7 +126,7 @@ public class Guard_RESTInterface {
 	@GetMapping("/login")
 	public ResponseEntity<String> login(@RequestParam String email, @RequestParam String password) {
 
-		log.trace("got a requst for login from: " + email);
+		log.trace("got a login request from: " + email);
 
 		String loginQuery = "SELECT pass FROM Users WHERE email=?";
 		PreparedStatement preparedStatement;
@@ -153,9 +148,9 @@ public class Guard_RESTInterface {
 		// check if the password is valid with argon2
 		boolean validPassword = encoder.matches(password, stored_password);
 
-		String response = "not authenticated";
+		String response = "error";
 		if (validPassword) {
-			response = "authenticated";
+			response = "success";
 		}
 
 		HttpHeaders headers = new HttpHeaders();
@@ -169,19 +164,17 @@ public class Guard_RESTInterface {
 	 */
 	@GetMapping(value = "/file")
 	public ResponseEntity<ClientResponse> get_file(@RequestParam String email,
-			@RequestParam String password,
 			@RequestParam String path) throws IOException {
 
 		ArrayList<String> groups = null;
 		int admin = -1;
-		String userQuery = "SELECT groups, admin FROM Users WHERE email=? AND pass=?";
+		String userQuery = "SELECT groups, admin FROM Users WHERE email=?";
 		PreparedStatement preparedStatement;
 
 		// Create the query and retrieve results from user db
 		try {
 			preparedStatement = conn.prepareStatement(userQuery);
 			preparedStatement.setString(1, email);
-			preparedStatement.setString(2, password);
 			ResultSet rs = preparedStatement.executeQuery();
 
 			while (rs.next()) {
@@ -201,35 +194,19 @@ public class Guard_RESTInterface {
 			groupsToString = groupsToString.substring(0, groupsToString.length() - 1);
 		}
 
-		// transform the received path into the corresponding hash with SHA-512
-		String path_hash = getPathHash(path);
-
 		// creaft the request to the db interface
 		String DB_request_url = dbServer_url + "decryption_key?" +
-				"path_hash=" + path_hash +
+				"path_hash=" + getPathHash(path) +
 				"&email=" + email +
 				"&user_groups=" + groupsToString +
-				"&admin=" + admin +
-				"&id=1";
+				"&admin=" + admin;
 
 		log.trace("Requesting for: " + DB_request_url);
 
 		// sends the request and capture the response
 		RestTemplate restTemplate = new RestTemplate();
 
-		Response response = new Response();
-		ClientResponse clientResponse = new ClientResponse();
-		response.set_path_hash(path);
-		response.set_auth(false);
-		response.set_email(email);
-		response.set_id(1);
-		response.set_w_mode(false);
-		response.set_key(null);
-
-		clientResponse.set_id(1);
-		clientResponse.set_path_hash(path);
-		clientResponse.set_w_mode(false);
-		clientResponse.set_text("");
+		ClientResponse clientResponse = new ClientResponse(path, false, false, "");
 
 		try {
 
@@ -238,30 +215,30 @@ public class Guard_RESTInterface {
 
 			if (res != null) {
 				if (res.get_auth()) {
-					response.set_auth(true);
+					clientResponse.set_auth(true);
 					if (res.get_w_mode()) {
-						// può scrivere
-						response.set_w_mode(true);
 						clientResponse.set_w_mode(true);
 					}
 
 					try {
 						InputStream inputStream = new FileInputStream(fP + path);
 						// set up buffer
-						long fileSize = new File(fP+ path).length();
-						byte[] allBytes = new byte[(int) fileSize];
-						// read from file and return result
-						inputStream.read(allBytes);
-						byte[] keyBytes = res.get_key();
-						SecretKey decK = new SecretKeySpec(keyBytes, 0, keyBytes.length, algorithm);
-						byte[] textDec = (new CryptographyPrimitive()).decrypt(allBytes, decK);
-						clientResponse.set_text(new String(textDec));
-						inputStream.close();
+						long fileSize = new File(fP + path).length();
+						if ((int) fileSize != 0) {
+							byte[] allBytes = new byte[(int) fileSize];
+							// read from file and return result
+							inputStream.read(allBytes);
+							byte[] keyBytes = res.get_key();
+							SecretKey decK = new SecretKeySpec(keyBytes, 0, keyBytes.length, algorithm);
+							byte[] textDec = (new CryptographyPrimitive()).decrypt(allBytes, decK);
+							clientResponse.set_text(new String(textDec));
+							inputStream.close();	
+						}else{
+							clientResponse.set_text("");
+						}
 					} catch (IOException e) {
-						// Handle the exception according to your application's logic
 						log.error("Error reading file: " + e.getMessage());
 					}
-
 				}
 			}
 		} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
@@ -316,7 +293,7 @@ public class Guard_RESTInterface {
 		String path_hash = getPathHash(path);
 
 		// creaft the request to the db interface
-		String DB_request_url = dbServer_url + "decryption_key?" +  
+		String DB_request_url = dbServer_url + "decryption_key?" +
 				"path_hash=" + path_hash +
 				"&email=" + email +
 				"&user_groups=" + groupsToString +
@@ -342,8 +319,8 @@ public class Guard_RESTInterface {
 						byte[] textEnc = (new CryptographyPrimitive()).encrypt(newTextToSave.getBytes(), encK);
 
 						// Save encrypted file to file
-						OutputStream outputStream = new FileOutputStream(fP +path);
-            		    outputStream.write(textEnc, 0, textEnc.length);
+						OutputStream outputStream = new FileOutputStream(fP + path);
+						outputStream.write(textEnc, 0, textEnc.length);
 						outputStream.flush();
 						outputStream.close();
 						responseString = "File saved";
@@ -363,51 +340,21 @@ public class Guard_RESTInterface {
 	/**
 	 * Endpoint to create a new file
 	 */
-	@PostMapping(value = "/newFile")
+	@GetMapping(value = "/newFile")
 	public ResponseEntity<String> new_file(@RequestParam String email,
-			@RequestParam String password,
 			@RequestParam String path,
-			@RequestBody String text) throws IOException {
-		ArrayList<String> groups = null;
-		int admin = -1;
-		String userQuery = "SELECT groups, admin FROM Users WHERE email=? AND pass=?";
-		PreparedStatement preparedStatement;
+			@RequestParam String r_groups,
+			@RequestParam String rw_groups) throws IOException {
 
-		// Create the query and retrieve results from user db
-		try {
-			preparedStatement = conn.prepareStatement(userQuery);
-			preparedStatement.setString(1, email);
-			preparedStatement.setString(2, password);
-			ResultSet rs = preparedStatement.executeQuery();
-
-			while (rs.next()) {
-				groups = new JSONToArray(rs.getString("groups"));
-				admin = rs.getInt("admin");
-			}
-		} catch (SQLException | JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-
-		// transform the array of groups into a string with separator ","
-		String groupsToString = "";
-		if (groups != null) {
-			for (int i = 0; i < groups.size(); i++) {
-				groupsToString = groupsToString.concat(groups.get(i) + ",");
-			}
-			groupsToString = groupsToString.substring(0, groupsToString.length() - 1);
-		}
-
-		// transform the received path into the corresponding hash with SHA-512
-		String path_hash = getPathHash(path);
+		String response = "error";
 
 		// creaft the request to the db interface
 		String DB_request_url = dbServer_url + "/newFile?" +
-				"path_hash=" + path_hash +
+				"path_hash=" + getPathHash(path) +
 				"&path=" + path +
 				"&email=" + email +
-				"&user_groups=" + groupsToString +
-				"&admin=" + admin +
-				"&id=1";
+				"&r_groups=" + r_groups +
+				"&rw_groups=" + rw_groups;
 
 		log.trace("Requesting for: " + DB_request_url);
 
@@ -416,32 +363,21 @@ public class Guard_RESTInterface {
 
 		try {
 			// get the response and decide accordingly
-			Response res = restTemplate.getForEntity(DB_request_url, Response.class).getBody();
+			String res = restTemplate.getForEntity(DB_request_url, String.class).getBody();
 
-			if (res != null) {
-				if (res.get_auth()) {
-					if (res.get_w_mode()) {
-						String[] splittedPath = path.split("/");
-						int indexName = splittedPath.length - 1;
-						String dirPath = "";
-						for (int i = 0; i < indexName; i++) {
-							dirPath += "/" + splittedPath[i];
-						}
-						File dir = new File(fP + dirPath);
-						dir.mkdirs();
-						File f = new File(fP + dirPath, splittedPath[indexName]);
-						f.createNewFile();
-						byte[] keyBytes = res.get_key();
-						SecretKey encK = new SecretKeySpec(keyBytes, 0, keyBytes.length, algorithm);
-						byte[] textEnc = (new CryptographyPrimitive()).encrypt(text.getBytes(), encK);
-					
-						// Save file
-						OutputStream outputStream = new FileOutputStream(fP +path);
-            		    outputStream.write(textEnc, 0, textEnc.length);
-						outputStream.flush();
-						outputStream.close();
-					}
+			if (res != null && res.equals("success")) {
+				String[] splittedPath = path.split("/");
+				int indexName = splittedPath.length - 1;
+				String dirPath = "";
+				for (int i = 0; i < indexName; i++) {
+					dirPath += "/" + splittedPath[i];
 				}
+				File dir = new File(fP + dirPath);
+				dir.mkdirs();
+				File f = new File(fP + dirPath, splittedPath[indexName]);
+				f.createNewFile();
+
+				response = "success";
 			}
 		} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
 			log.error("Error in the response from DB server");
@@ -449,7 +385,7 @@ public class Guard_RESTInterface {
 
 		HttpHeaders headers = new HttpHeaders();
 
-		ResponseEntity<String> entity = new ResponseEntity<>("ok", headers, HttpStatus.CREATED);
+		ResponseEntity<String> entity = new ResponseEntity<>(response, headers, HttpStatus.CREATED);
 
 		return entity;
 	}
