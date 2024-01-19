@@ -80,7 +80,7 @@ public class Guard_RESTInterface {
 	@GetMapping("/files")
 	public ResponseEntity<String> get_files() {
 
-		log.trace("got a requst for available files");
+		log.trace("got a request for available files");
 		String files = fetch_files(fP + "Files", "");
 
 		HttpHeaders headers = new HttpHeaders();
@@ -117,7 +117,7 @@ public class Guard_RESTInterface {
 
 			prepStatement.executeUpdate();
 		} catch (SQLException e) {
-			e.printStackTrace();
+			log.error("User already existent");
 		}
 	}
 
