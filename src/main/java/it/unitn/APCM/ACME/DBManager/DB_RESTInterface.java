@@ -174,6 +174,12 @@ public class DB_RESTInterface {
 			SecretKey sK = (new CryptographyPrimitive()).getSymmetricKey();
 			byte[] enc_key = (new CryptographyPrimitive()).encrypt(sK.getEncoded(), DB_RESTApp.masterKey);
 			
+			r_groups = r_groups.replace(",", "\",\"");
+			r_groups = "[\"" + r_groups + "\"]";
+
+			rw_groups = rw_groups.replace(",", "\",\"");
+			rw_groups = "[\"" + rw_groups + "\"]";
+
 			String insertQuery = "INSERT INTO Files(path_hash, path, owner, rw_groups, r_groups, encryption_key) VALUES (?,?,?,?,?,?)";
 			try {
 				PreparedStatement prepStatement = conn.prepareStatement(insertQuery);

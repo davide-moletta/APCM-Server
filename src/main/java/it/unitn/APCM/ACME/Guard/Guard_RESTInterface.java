@@ -23,6 +23,7 @@ import it.unitn.APCM.ACME.ServerCommon.ClientResponse;
 import it.unitn.APCM.ACME.ServerCommon.CryptographyPrimitive;
 import it.unitn.APCM.ACME.ServerCommon.JSONToArray;
 import it.unitn.APCM.ACME.ServerCommon.Response;
+import it.unitn.APCM.ACME.ServerCommon.UserPrivilege;
 
 import java.nio.charset.StandardCharsets;
 import java.io.File;
@@ -166,40 +167,14 @@ public class Guard_RESTInterface {
 	public ResponseEntity<ClientResponse> get_file(@RequestParam String email,
 			@RequestParam String path) throws IOException {
 
-		ArrayList<String> groups = null;
-		int admin = -1;
-		String userQuery = "SELECT groups, admin FROM Users WHERE email=?";
-		PreparedStatement preparedStatement;
-
-		// Create the query and retrieve results from user db
-		try {
-			preparedStatement = conn.prepareStatement(userQuery);
-			preparedStatement.setString(1, email);
-			ResultSet rs = preparedStatement.executeQuery();
-
-			while (rs.next()) {
-				groups = new JSONToArray(rs.getString("groups"));
-				admin = rs.getInt("admin");
-			}
-		} catch (SQLException | JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-
-		// transform the array of groups into a string with separator ","
-		String groupsToString = "";
-		if (groups != null) {
-			for (int i = 0; i < groups.size(); i++) {
-				groupsToString = groupsToString.concat(groups.get(i) + ",");
-			}
-			groupsToString = groupsToString.substring(0, groupsToString.length() - 1);
-		}
+		UserPrivilege user = getUserPrivilege(email);
 
 		// creaft the request to the db interface
 		String DB_request_url = dbServer_url + "decryption_key?" +
 				"path_hash=" + getPathHash(path) +
 				"&email=" + email +
-				"&user_groups=" + groupsToString +
-				"&admin=" + admin;
+				"&user_groups=" + user.getGroups() +
+				"&admin=" + user.getAdmin();
 
 		log.trace("Requesting for: " + DB_request_url);
 
@@ -259,40 +234,14 @@ public class Guard_RESTInterface {
 			@RequestParam String path,
 			@RequestBody String newTextToSave) throws IOException {
 
-		ArrayList<String> groups = null;
-		int admin = -1;
-		String userQuery = "SELECT groups, admin FROM Users WHERE email=?";
-		PreparedStatement preparedStatement;
-
-		// Create the query and retrieve results from user db
-		try {
-			preparedStatement = conn.prepareStatement(userQuery);
-			preparedStatement.setString(1, email);
-			ResultSet rs = preparedStatement.executeQuery();
-
-			while (rs.next()) {
-				groups = new JSONToArray(rs.getString("groups"));
-				admin = rs.getInt("admin");
-			}
-		} catch (SQLException | JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-		
-		// transform the array of groups into a string with separator ","
-		String groupsToString = "";
-		if (groups != null) {
-			for (int i = 0; i < groups.size(); i++) {
-				groupsToString = groupsToString.concat(groups.get(i) + ",");
-			}
-			groupsToString = groupsToString.substring(0, groupsToString.length() - 1);
-		}
+		UserPrivilege user = getUserPrivilege(email);
 
 		// creaft the request to the db interface
 		String DB_request_url = dbServer_url + "decryption_key?" +
 				"path_hash=" + getPathHash(path) +
 				"&email=" + email +
-				"&user_groups=" + groupsToString +
-				"&admin=" + admin;
+				"&user_groups=" + user.getGroups() +
+				"&admin=" + user.getAdmin();
 
 		log.trace("Requesting for: " + DB_request_url);
 
@@ -395,5 +344,37 @@ public class Guard_RESTInterface {
 			return "";
 			// throw new RuntimeException(e);
 		}
+	}
+
+	private UserPrivilege getUserPrivilege(String email){
+		ArrayList<String> groups = null;
+		int admin = -1;
+		String userQuery = "SELECT groups, admin FROM Users WHERE email=?";
+		PreparedStatement preparedStatement;
+
+		// Create the query and retrieve results from user db
+		try {
+			preparedStatement = conn.prepareStatement(userQuery);
+			preparedStatement.setString(1, email);
+			ResultSet rs = preparedStatement.executeQuery();
+
+			while (rs.next()) {
+				groups = new JSONToArray(rs.getString("groups"));
+				admin = rs.getInt("admin");
+			}
+		} catch (SQLException | JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
+		
+		// transform the array of groups into a string with separator ","
+		String groupsToString = "";
+		if (groups != null) {
+			for (int i = 0; i < groups.size(); i++) {
+				groupsToString = groupsToString.concat(groups.get(i) + ",");
+			}
+			groupsToString = groupsToString.substring(0, groupsToString.length() - 1);
+		}
+
+		return  new UserPrivilege(admin, groupsToString);
 	}
 }
