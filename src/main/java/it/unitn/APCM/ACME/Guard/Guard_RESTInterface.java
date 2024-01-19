@@ -256,20 +256,18 @@ public class Guard_RESTInterface {
 	 */
 	@PostMapping(value = "/file")
 	public ResponseEntity<String> save_file(@RequestParam String email,
-			@RequestParam String password,
 			@RequestParam String path,
 			@RequestBody String newTextToSave) throws IOException {
 
 		ArrayList<String> groups = null;
 		int admin = -1;
-		String userQuery = "SELECT groups, admin FROM Users WHERE email=? AND pass=?";
+		String userQuery = "SELECT groups, admin FROM Users WHERE email=?";
 		PreparedStatement preparedStatement;
 
 		// Create the query and retrieve results from user db
 		try {
 			preparedStatement = conn.prepareStatement(userQuery);
 			preparedStatement.setString(1, email);
-			preparedStatement.setString(2, password);
 			ResultSet rs = preparedStatement.executeQuery();
 
 			while (rs.next()) {
@@ -279,7 +277,7 @@ public class Guard_RESTInterface {
 		} catch (SQLException | JsonProcessingException e) {
 			throw new RuntimeException(e);
 		}
-
+		
 		// transform the array of groups into a string with separator ","
 		String groupsToString = "";
 		if (groups != null) {
@@ -289,20 +287,16 @@ public class Guard_RESTInterface {
 			groupsToString = groupsToString.substring(0, groupsToString.length() - 1);
 		}
 
-		// transform the received path into the corresponding hash with SHA-512
-		String path_hash = getPathHash(path);
-
 		// creaft the request to the db interface
 		String DB_request_url = dbServer_url + "decryption_key?" +
-				"path_hash=" + path_hash +
+				"path_hash=" + getPathHash(path) +
 				"&email=" + email +
 				"&user_groups=" + groupsToString +
-				"&admin=" + admin +
-				"&id=1";
+				"&admin=" + admin;
 
 		log.trace("Requesting for: " + DB_request_url);
 
-		String responseString = "Impossible to save the file";
+		String responseString = "error";
 
 		// sends the request and capture the response
 		RestTemplate restTemplate = new RestTemplate();
@@ -312,19 +306,17 @@ public class Guard_RESTInterface {
 			Response res = restTemplate.getForEntity(DB_request_url, Response.class).getBody();
 
 			if (res != null) {
-				if (res.get_auth()) {
-					if (res.get_w_mode()) {
-						byte[] keyBytes = res.get_key();
-						SecretKey encK = new SecretKeySpec(keyBytes, 0, keyBytes.length, algorithm);
-						byte[] textEnc = (new CryptographyPrimitive()).encrypt(newTextToSave.getBytes(), encK);
+				if (res.get_w_mode() && newTextToSave.length() != 0) {
+					byte[] keyBytes = res.get_key();
+					SecretKey encK = new SecretKeySpec(keyBytes, 0, keyBytes.length, algorithm);
+					byte[] textEnc = (new CryptographyPrimitive()).encrypt(newTextToSave.getBytes(), encK);
 
-						// Save encrypted file to file
-						OutputStream outputStream = new FileOutputStream(fP + path);
-						outputStream.write(textEnc, 0, textEnc.length);
-						outputStream.flush();
-						outputStream.close();
-						responseString = "File saved";
-					}
+					// Save encrypted file to file
+					OutputStream outputStream = new FileOutputStream(fP + path);
+					outputStream.write(textEnc, 0, textEnc.length);
+					outputStream.flush();
+					outputStream.close();
+					responseString = "success";
 				}
 			}
 		} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {

@@ -132,9 +132,7 @@ public class DB_RESTInterface {
 			} catch (SQLException e) {
 				throw new RuntimeException(e);
 			}
-		} else {
-			res.set_key(null);
-		}
+		} 
 
 		HttpHeaders headers = new HttpHeaders();
 		
