@@ -27,9 +27,12 @@ import it.unitn.APCM.ACME.ServerCommon.Response;
 
 import java.nio.charset.StandardCharsets;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Writer;
 
 import org.apache.commons.io.IOUtils;
 
@@ -50,9 +53,7 @@ public class Guard_RESTInterface {
 	// Connection statically instantiated
 	private final Connection conn = Guard_Connection.getDbconn();
 	private static final Logger log = LoggerFactory.getLogger(Guard_RESTInterface.class);
-	private static final String dbServer_url = "http://localhost:8091/api/v1/decryption_key?";
-	private static final String dbServer_url2 = "http://localhost:8091/api/v1/";
-	private static final String filePath = "src\\main\\java\\it\\unitn\\APCM\\ACME\\Guard\\Files";
+	private static final String dbServer_url = "http://localhost:8091/api/v1/";
 	private static final String fP = "src\\main\\java\\it\\unitn\\APCM\\ACME\\Guard\\";
 	// encryption algorithm
 	// CHECK TYPE OF ENCRYPTION ALGORITHM
@@ -84,7 +85,7 @@ public class Guard_RESTInterface {
 	public ResponseEntity<String> get_files() {
 
 		log.trace("got a requst for available files");
-		String files = fetch_files(filePath, "");
+		String files = fetch_files(fP+"Files", "");
 
 		HttpHeaders headers = new HttpHeaders();
 		ResponseEntity<String> entity = new ResponseEntity<>(files, headers, HttpStatus.CREATED);
@@ -103,12 +104,12 @@ public class Guard_RESTInterface {
 			
 		// generate hash with argon2
 		String encoded_password = encoder.encode(password);
-		System.out.println("generated pass: " + encoded_password);
+		//System.out.println("generated pass: " + encoded_password);
 
 		// format groups
 		groups = groups.replace(",", "\",\"");
 		groups = "[\"" + groups + "\"]";
-		System.out.println(groups);
+		//System.out.println(groups);
 
 		String insertQuery = "INSERT INTO Users(email, pass, groups, admin) VALUES (?,?,?,?)";
 		try {
@@ -204,7 +205,7 @@ public class Guard_RESTInterface {
 		String path_hash = getPathHash(path);
 
 		// creaft the request to the db interface
-		String DB_request_url = dbServer_url +
+		String DB_request_url = dbServer_url + "decryption_key?" +
 				"path_hash=" + path_hash +
 				"&email=" + email +
 				"&user_groups=" + groupsToString +
@@ -230,8 +231,6 @@ public class Guard_RESTInterface {
 		clientResponse.set_w_mode(false);
 		clientResponse.set_text("");
 
-		String fileContent = "";
-
 		try {
 
 			// get the response and decide accordingly
@@ -246,18 +245,18 @@ public class Guard_RESTInterface {
 						clientResponse.set_w_mode(true);
 					}
 
-					// decript del file con chiave
-					InputStream in = getClass().getResourceAsStream(path);
 					try {
-						fileContent = IOUtils.toString(in, StandardCharsets.UTF_8);
-						byte[] keyBytes = (res.get_key()).getBytes();
-						System.out.println("OPEN prima: " + fileContent);
+						InputStream inputStream = new FileInputStream(fP + path);
+						// set up buffer
+						long fileSize = new File(fP+ path).length();
+						byte[] allBytes = new byte[(int) fileSize];
+						// read from file and return result
+						inputStream.read(allBytes);
+						byte[] keyBytes = res.get_key();
 						SecretKey decK = new SecretKeySpec(keyBytes, 0, keyBytes.length, algorithm);
-						byte[] textDec = (new CryptographyPrimitive()).decrypt(fileContent.getBytes(), decK);
-						String t = new String(textDec);
-						System.out.println("OPEN: " + t);
+						byte[] textDec = (new CryptographyPrimitive()).decrypt(allBytes, decK);
 						clientResponse.set_text(new String(textDec));
-						in.close();
+						inputStream.close();
 					} catch (IOException e) {
 						// Handle the exception according to your application's logic
 						log.error("Error reading file: " + e.getMessage());
@@ -317,7 +316,7 @@ public class Guard_RESTInterface {
 		String path_hash = getPathHash(path);
 
 		// creaft the request to the db interface
-		String DB_request_url = dbServer_url +
+		String DB_request_url = dbServer_url + "decryption_key?" +  
 				"path_hash=" + path_hash +
 				"&email=" + email +
 				"&user_groups=" + groupsToString +
@@ -338,17 +337,15 @@ public class Guard_RESTInterface {
 			if (res != null) {
 				if (res.get_auth()) {
 					if (res.get_w_mode()) {
-						byte[] keyBytes = (res.get_key()).getBytes();
+						byte[] keyBytes = res.get_key();
 						SecretKey encK = new SecretKeySpec(keyBytes, 0, keyBytes.length, algorithm);
-						System.out.println("SAVE prima: " + newTextToSave);
 						byte[] textEnc = (new CryptographyPrimitive()).encrypt(newTextToSave.getBytes(), encK);
-						String t = new String(textEnc);
-						System.out.println("SAVE: " + t);
-						// Encrypt the file
-						FileOutputStream fOut = new FileOutputStream(fP + path);
-						IOUtils.write(new String(textEnc), fOut, StandardCharsets.UTF_8);
-						// fOut.flush();
-						fOut.close();
+
+						// Save encrypted file to file
+						OutputStream outputStream = new FileOutputStream(fP +path);
+            		    outputStream.write(textEnc, 0, textEnc.length);
+						outputStream.flush();
+						outputStream.close();
 						responseString = "File saved";
 					}
 				}
@@ -404,7 +401,7 @@ public class Guard_RESTInterface {
 		String path_hash = getPathHash(path);
 
 		// creaft the request to the db interface
-		String DB_request_url = dbServer_url2 + "/newFile?" +
+		String DB_request_url = dbServer_url + "/newFile?" +
 				"path_hash=" + path_hash +
 				"&path=" + path +
 				"&email=" + email +
@@ -434,17 +431,15 @@ public class Guard_RESTInterface {
 						dir.mkdirs();
 						File f = new File(fP + dirPath, splittedPath[indexName]);
 						f.createNewFile();
-						byte[] keyBytes = (res.get_key()).getBytes();
+						byte[] keyBytes = res.get_key();
 						SecretKey encK = new SecretKeySpec(keyBytes, 0, keyBytes.length, algorithm);
-						System.out.println("CREA prima: " + text);
 						byte[] textEnc = (new CryptographyPrimitive()).encrypt(text.getBytes(), encK);
-						String t = new String(textEnc);
-						System.out.println("CREA: " + t);
-						// Encrypt the file
-						FileOutputStream fOut = new FileOutputStream(fP + path);
-						IOUtils.write(new String(textEnc), fOut, StandardCharsets.UTF_8);
-						// fOut.flush();
-						fOut.close();
+					
+						// Save file
+						OutputStream outputStream = new FileOutputStream(fP +path);
+            		    outputStream.write(textEnc, 0, textEnc.length);
+						outputStream.flush();
+						outputStream.close();
 					}
 				}
 			}

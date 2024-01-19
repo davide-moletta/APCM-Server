@@ -57,21 +57,20 @@ public class DB_RESTInterface {
 
 	/**
 	 * Endpoint for getting the password of the specified file if authorized
-	 */
+	 */        
 	@GetMapping("/decryption_key")
 	public ResponseEntity<Response> get_key(@RequestParam(value = "path_hash") String path_hash,
 			@RequestParam(value = "email") String email,
 			@RequestParam(value = "user_groups") String user_group,
 			@RequestParam(value = "admin") String admin,
 			@RequestParam(value = "id") int id) {
-
+				
 		Response res = new Response();
 		res.set_auth(false);
 		res.set_w_mode(false);
 		res.set_email(email);
 		res.set_path_hash(path_hash);
 		res.set_id(id);
-
 		ArrayList<String> user_groups = new ArrayList<String>(Arrays.asList(user_group.split(",")));
 
 		String getInfoQuery = "SELECT path_hash, owner, rw_groups, r_groups FROM Files WHERE path_hash = ?";
@@ -117,36 +116,34 @@ public class DB_RESTInterface {
 		} catch (SQLException | JsonProcessingException e) {
 			throw new RuntimeException(e);
 		}
-
+	
 		if (res.get_auth()) {
 			// Check ok then return key
-			String selectQuery = "SELECT path_hash, encryption_key FROM Files WHERE path_hash = ?";
+			String selectQuery = "SELECT encryption_key FROM Files WHERE path_hash = ?";
 			try {
 				ps = conn.prepareStatement(selectQuery);
 				ps.setString(1, path_hash);
 				ResultSet rs = ps.executeQuery();
 
-				String encryptionKey = null;
+				byte[] encryptionKey = null;
 
 				while (rs.next()) {
-					encryptionKey = (rs.getString("encryption_key"));
+					encryptionKey = (rs.getBytes("encryption_key"));
 				}
 
-				if (encryptionKey != "" && encryptionKey != null) {
-					System.out.println("CHIAVE CIFRATA LETTURA: " + encryptionKey);
-					String k = new String((new CryptographyPrimitive()).decrypt(encryptionKey.getBytes(), DB_RESTApp.masterKey));
-					System.out.println("CHIAVE LETTA: " + k);
-				 	res.set_key(k);
+				if (encryptionKey != null) {
+					byte[] decKey = (new CryptographyPrimitive()).decrypt(encryptionKey, DB_RESTApp.masterKey);
+				 	res.set_key(decKey);
 				}
 			} catch (SQLException e) {
 				throw new RuntimeException(e);
 			}
 		} else {
-			res.set_key("noKey");
+			res.set_key(null);
 		}
 
 		HttpHeaders headers = new HttpHeaders();
-
+		
 		ResponseEntity<Response> entity = new ResponseEntity<>(res, headers, HttpStatus.CREATED);
 
 		return entity;
@@ -190,12 +187,8 @@ public class DB_RESTInterface {
 			res.set_id(id);
 			//generate new key 
 			SecretKey sK = (new CryptographyPrimitive()).getSymmetricKey();
-			System.out.println("CHIAVE CREATA: " + new String(sK.getEncoded()));
-			String enc_key = new String((new CryptographyPrimitive()).encrypt(sK.getEncoded(), DB_RESTApp.masterKey));
-			System.out.println("CHIAVE CIFRATA: " + enc_key);
-			String dec = new String((new CryptographyPrimitive()).decrypt(enc_key.getBytes(), DB_RESTApp.masterKey));
-			System.out.println("Decifrata: " + dec);
-			res.set_key(new String(sK.getEncoded()));
+			byte[] enc_key = (new CryptographyPrimitive()).encrypt(sK.getEncoded(), DB_RESTApp.masterKey);
+			res.set_key(sK.getEncoded());
 			
 			String insertQuery = "INSERT INTO Files(path_hash, path, owner, rw_groups, r_groups, encryption_key) VALUES (?,?,?,?,?,?)";
 			try {
@@ -205,7 +198,7 @@ public class DB_RESTInterface {
 				prepStatement.setString(3, email);
 				prepStatement.setString(4, user_group);
 				prepStatement.setString(5, user_group);
-				prepStatement.setString(6, enc_key);
+				prepStatement.setBytes(6, enc_key);
 
 				prepStatement.executeUpdate();
 			} catch (SQLException e) {

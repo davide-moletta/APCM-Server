@@ -6,7 +6,7 @@ public class Response {
     String email;
     boolean w_mode;
     boolean auth;
-    String key;
+    byte[] key;
 
     /*
      * SETTER
@@ -19,7 +19,7 @@ public class Response {
 
     public void set_w_mode(boolean w_mode) {this.w_mode = w_mode;}
 
-    public void set_key(String key) {this.key = key;}
+    public void set_key(byte[] key) {this.key = key;}
 
     public void set_auth(boolean auth) {this.auth = auth;}
 
@@ -34,7 +34,7 @@ public class Response {
 
     public boolean get_w_mode() {return this.w_mode;}
 
-    public String get_key() {return this.key;}
+    public byte[] get_key() {return this.key;}
 
     public boolean get_auth() {return this.auth;}
 }

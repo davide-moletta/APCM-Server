@@ -66,7 +66,6 @@ public class CryptographyPrimitive {
 
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
                 | BadPaddingException | InvalidAlgorithmParameterException e) {
-            System.out.println(e);
             return null;
         }
     }
@@ -99,7 +98,6 @@ public class CryptographyPrimitive {
             return decText;
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
                 | BadPaddingException | InvalidAlgorithmParameterException e) {
-            System.out.println(e);
             return null;
         }
     }
