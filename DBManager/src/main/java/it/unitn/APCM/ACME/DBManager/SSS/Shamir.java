@@ -14,6 +14,7 @@ import java.util.StringJoiner;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import it.unitn.APCM.ACME.DBManager.DB_RESTApp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -190,6 +191,9 @@ public class Shamir {
 		byte[] k5 = null;
 
 		try {
+			if (path == null) {
+				path = Objects.requireNonNull(Shamir.class.getResource("/SSS.txt")).getPath();
+			}
 			String content = Files.readString(Paths.get(path), StandardCharsets.UTF_8);
 			String[] seedString = (content.split(";"));
 			seed = parse(seedString[0]);

@@ -33,8 +33,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -50,7 +48,7 @@ public class Guard_RESTInterface {
 	// Connection statically instantiated
 	private final Connection conn = Guard_Connection.getDbconn();
 	private static final Logger log = LoggerFactory.getLogger(Guard_RESTInterface.class);
-	private static final String dbServer_url = "http://localhost:8091/api/v1/";
+	private static final String dbServer_url = String.format("https://%s/api/v1/", Guard_RESTApp.srvdb);
 	private static final String fP = "src\\main\\java\\it\\unitn\\APCM\\ACME\\Guard\\";
 	// encryption algorithm
 	static final String algorithm = "AES";

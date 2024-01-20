@@ -7,8 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import it.unitn.APCM.ACME.DBManager.SSS.Shamir;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 import javax.crypto.SecretKey;
 
@@ -19,25 +18,36 @@ public class DB_RESTApp {
 
 	public static void main(String[] args) {
 		SpringApplication app = new SpringApplication(DB_RESTApp.class);
-		String sss_path = "SSS.txt";
-		switch (args.length) {
+		String sss_path = null;
+		ArrayList<String> real_args = new ArrayList<>(1);
+		// Exclude Spring params
+		for (String a : args) {
+			if (a != null && !a.startsWith("--")) {
+				real_args.add(a);
+			}
+		}
+		switch (real_args.size()) {
 			case 0:
 				// Use default values
 				break;
 			case 1:
-				sss_path = args[0];
+				// parameter that we want
+				sss_path = real_args.get(0);
 				break;
 			default:
-				log.error("Error in parameters");
+				log.error("Error in parameters number, some parameter are not parsed");
 				throw new IllegalArgumentException("At most 1 parameter could be passed");
 		}
 		Shamir sh = new Shamir();
 		try {
+//			if (sss_path == null) {
+//				sss_path = Objects.requireNonNull(DB_RESTApp.class.getResource("/SSS.txt")).toString();
+//			}
 			masterKey = sh.getMasterSecret(sss_path);
 			app.run(args);
 			log.info("DB_RESTApp started");
 		}
-		catch (IOException e) {
+		catch (IOException | NullPointerException e) {
 			log.error(e.toString());
 		}
 	}
