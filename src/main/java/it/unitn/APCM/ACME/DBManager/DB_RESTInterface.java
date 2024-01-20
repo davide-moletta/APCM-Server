@@ -12,6 +12,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -60,6 +61,8 @@ public class DB_RESTInterface {
 	 */        
 	@GetMapping("/decryption_key")
 	public ResponseEntity<Response> get_key(@RequestParam(value = "path_hash") String path_hash,
+			@RequestParam(value = "file_hash") String file_hash,
+			@RequestParam(value = "open") boolean open,
 			@RequestParam(value = "email") String email,
 			@RequestParam(value = "user_groups") String user_group,
 			@RequestParam(value = "admin") String admin) {
@@ -67,7 +70,7 @@ public class DB_RESTInterface {
 		Response res = new Response(path_hash, email, false, false, null);
 		ArrayList<String> user_groups = new ArrayList<String>(Arrays.asList(user_group.split(",")));
 
-		String getInfoQuery = "SELECT path_hash, owner, rw_groups, r_groups FROM Files WHERE path_hash = ?";
+		String getInfoQuery = "SELECT path_hash, owner, rw_groups, r_groups, file_hash FROM Files WHERE path_hash = ?";
 		PreparedStatement ps;
 		try {
 			ps = conn.prepareStatement(getInfoQuery);
@@ -75,30 +78,35 @@ public class DB_RESTInterface {
 			ResultSet rs = ps.executeQuery();
 			while (rs.next()) {
 				if (rs.isFirst()) {
-					if (admin.equals("1")) {
-						log.trace("User is an admin");
-						res.set_auth(true);
-						res.set_w_mode(true);
-					} else if (rs.getString("owner").equals(email)) {
-						log.trace("User is the owner for the file requested");
-						res.set_auth(true);
-						res.set_w_mode(true);
-					} else {
-						ArrayList<String> rw_groups = new JSONToArray(rs.getString("rw_groups"));
-						ArrayList<String> r_groups = new JSONToArray(rs.getString("r_groups"));
+					if(open == false || rs.getString("file_hash").equals(file_hash)){
+						if (admin.equals("1")) {
+							log.trace("User is an admin");
+							res.set_auth(true);
+							res.set_w_mode(true);
+						} else if (rs.getString("owner").equals(email)) {
+							log.trace("User is the owner for the file requested");
+							res.set_auth(true);
+							res.set_w_mode(true);
+						} else {
+							ArrayList<String> rw_groups = new JSONToArray(rs.getString("rw_groups"));
+							ArrayList<String> r_groups = new JSONToArray(rs.getString("r_groups"));
 
-						for (String g : user_groups) {
-							if (rw_groups.contains(g)) {
-								res.set_auth(true);
-								res.set_w_mode(true);
-								break;
-							} else if (r_groups.contains(g)) {
-								res.set_auth(true);
-								res.set_w_mode(false);
-								// no break because can be also present after another g in the rw_groups
+							for (String g : user_groups) {
+								if (rw_groups.contains(g)) {
+									res.set_auth(true);
+									res.set_w_mode(true);
+									break;
+								} else if (r_groups.contains(g)) {
+									res.set_auth(true);
+									res.set_w_mode(false);
+									// no break because can be also present after another g in the rw_groups
+								}
 							}
-						}
 
+						}
+					} else {
+						log.error("File corrupted");
+						throw new ResponseStatusException(HttpStatus.CONFLICT, "File corrupted");
 					}
 				} else {
 					// more than one result
@@ -180,15 +188,16 @@ public class DB_RESTInterface {
 			rw_groups = rw_groups.replace(",", "\",\"");
 			rw_groups = "[\"" + rw_groups + "\"]";
 
-			String insertQuery = "INSERT INTO Files(path_hash, path, owner, rw_groups, r_groups, encryption_key) VALUES (?,?,?,?,?,?)";
+			String insertQuery = "INSERT INTO Files(path_hash, file_hash, path, owner, rw_groups, r_groups, encryption_key) VALUES (?,?,?,?,?,?,?)";
 			try {
 				PreparedStatement prepStatement = conn.prepareStatement(insertQuery);
 				prepStatement.setString(1, path_hash);
-				prepStatement.setString(2, path);
-				prepStatement.setString(3, email);
-				prepStatement.setString(4, rw_groups);
-				prepStatement.setString(5, r_groups);
-				prepStatement.setBytes(6, enc_key);
+				prepStatement.setString(2, "");
+				prepStatement.setString(3, path);
+				prepStatement.setString(4, email);
+				prepStatement.setString(5, rw_groups);
+				prepStatement.setString(6, r_groups);
+				prepStatement.setBytes(7, enc_key);
 
 				prepStatement.executeUpdate();
 
@@ -200,6 +209,36 @@ public class DB_RESTInterface {
 
 		HttpHeaders headers = new HttpHeaders();
 
+		ResponseEntity<String> entity = new ResponseEntity<>(res, headers, HttpStatus.CREATED);
+
+		return entity;
+	}
+
+	/**
+	 * Endpoint for saving new file Hash
+	 */
+	@PostMapping("/saveFile")
+	public ResponseEntity<String> save_File(@RequestParam(value = "path_hash") String path_hash,
+			@RequestParam(value = "file_hash") String file_hash) {
+
+		boolean error = false;
+		String res = "error";
+
+		String updateHashQuery = "UPDATE Files SET file_hash = ? WHERE path_hash = ?";
+		PreparedStatement ps;
+		try {
+			ps = conn.prepareStatement(updateHashQuery);
+			ps.setString(1, file_hash);
+			ps.setString(2, path_hash);
+			int rs = ps.executeUpdate();
+			if(rs == 1){
+				res = "success";
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+
+		HttpHeaders headers = new HttpHeaders();
 		ResponseEntity<String> entity = new ResponseEntity<>(res, headers, HttpStatus.CREATED);
 
 		return entity;

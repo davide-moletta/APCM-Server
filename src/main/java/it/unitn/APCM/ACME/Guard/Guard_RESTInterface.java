@@ -169,9 +169,28 @@ public class Guard_RESTInterface {
 
 		UserPrivilege user = getUserPrivilege(email);
 
+		InputStream inputStream = new FileInputStream(fP + path);
+		// set up buffer
+		long fileSize = new File(fP + path).length();
+		byte[] allBytes = null;
+		if ((int) fileSize != 0) {
+			allBytes = new byte[(int) fileSize];
+			// read from file and return result
+			inputStream.read(allBytes);
+			inputStream.close();	
+		}
+
+		String file_hash = "";
+
+		if((int) fileSize != 0){
+			file_hash = (new CryptographyPrimitive()).getHash(allBytes);
+		}
+
 		// creaft the request to the db interface
 		String DB_request_url = dbServer_url + "decryption_key?" +
-				"path_hash=" + getPathHash(path) +
+				"path_hash=" + (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8)) +
+				"&file_hash=" + file_hash  +
+				"&open=true" + 
 				"&email=" + email +
 				"&user_groups=" + user.getGroups() +
 				"&admin=" + user.getAdmin();
@@ -180,7 +199,7 @@ public class Guard_RESTInterface {
 
 		// sends the request and capture the response
 		RestTemplate restTemplate = new RestTemplate();
-
+		HttpStatus status = HttpStatus.CREATED;
 		ClientResponse clientResponse = new ClientResponse(path, false, false, "");
 
 		try {
@@ -195,33 +214,24 @@ public class Guard_RESTInterface {
 						clientResponse.set_w_mode(true);
 					}
 
-					try {
-						InputStream inputStream = new FileInputStream(fP + path);
-						// set up buffer
-						long fileSize = new File(fP + path).length();
-						if ((int) fileSize != 0) {
-							byte[] allBytes = new byte[(int) fileSize];
-							// read from file and return result
-							inputStream.read(allBytes);
-							byte[] keyBytes = res.get_key();
-							SecretKey decK = new SecretKeySpec(keyBytes, 0, keyBytes.length, algorithm);
-							byte[] textDec = (new CryptographyPrimitive()).decrypt(allBytes, decK);
-							clientResponse.set_text(new String(textDec));
-							inputStream.close();	
-						}else{
-							clientResponse.set_text("");
-						}
-					} catch (IOException e) {
-						log.error("Error reading file: " + e.getMessage());
+					if ((int) fileSize != 0) {
+						byte[] keyBytes = res.get_key();
+						SecretKey decK = new SecretKeySpec(keyBytes, 0, keyBytes.length, algorithm);
+						byte[] textDec = (new CryptographyPrimitive()).decrypt(allBytes, decK);
+						clientResponse.set_text(new String(textDec));
+					}else{
+						clientResponse.set_text("");
 					}
 				}
 			}
 		} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
+			status = HttpStatus.INTERNAL_SERVER_ERROR;
+			clientResponse = null;
 			log.error("Error in the response from DB server");
 		}
 
 		HttpHeaders headers = new HttpHeaders();
-		ResponseEntity<ClientResponse> entity = new ResponseEntity<>(clientResponse, headers, HttpStatus.CREATED);
+		ResponseEntity<ClientResponse> entity = new ResponseEntity<>(clientResponse, headers, status);
 
 		return entity;
 	}
@@ -238,7 +248,9 @@ public class Guard_RESTInterface {
 
 		// creaft the request to the db interface
 		String DB_request_url = dbServer_url + "decryption_key?" +
-				"path_hash=" + getPathHash(path) +
+				"path_hash=" + (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8)) +
+				"&file_hash=" + "" +
+				"&open=false" + 
 				"&email=" + email +
 				"&user_groups=" + user.getGroups() +
 				"&admin=" + user.getAdmin();
@@ -265,7 +277,15 @@ public class Guard_RESTInterface {
 					outputStream.write(textEnc, 0, textEnc.length);
 					outputStream.flush();
 					outputStream.close();
-					responseString = "success";
+
+					String DB_request2_url = dbServer_url + "saveFile?" +
+						"path_hash=" + (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8)) +
+						"&file_hash=" + (new CryptographyPrimitive()).getHash(textEnc);
+
+					String res2 = restTemplate.postForEntity(DB_request2_url, null, String.class).getBody();
+					if(res2.equals("success")){
+						responseString = "success";
+					}
 				}
 			}
 		} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
@@ -291,7 +311,7 @@ public class Guard_RESTInterface {
 
 		// creaft the request to the db interface
 		String DB_request_url = dbServer_url + "/newFile?" +
-				"path_hash=" + getPathHash(path) +
+				"path_hash=" + (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8)) +
 				"&path=" + path +
 				"&email=" + email +
 				"&r_groups=" + r_groups +
@@ -329,21 +349,6 @@ public class Guard_RESTInterface {
 		ResponseEntity<String> entity = new ResponseEntity<>(response, headers, HttpStatus.CREATED);
 
 		return entity;
-	}
-
-	private String getPathHash(String path) {
-		try {
-			MessageDigest md = MessageDigest.getInstance("SHA-512");
-			byte[] bytes = md.digest(path.getBytes(StandardCharsets.UTF_8));
-			StringBuilder sb = new StringBuilder();
-			for (int i = 0; i < bytes.length; i++) {
-				sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
-			}
-			return sb.toString();
-		} catch (NoSuchAlgorithmException e) {
-			return "";
-			// throw new RuntimeException(e);
-		}
 	}
 
 	private UserPrivilege getUserPrivilege(String email){
