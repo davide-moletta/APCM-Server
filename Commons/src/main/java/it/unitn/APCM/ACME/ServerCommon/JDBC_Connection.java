@@ -2,6 +2,7 @@ package it.unitn.APCM.ACME.ServerCommon;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.sql.*;
 
 /**
@@ -27,8 +28,8 @@ public class JDBC_Connection {
 	 */
 	private void connect(String file) {
 		try {
-			// db_files uri
-			String url = "jdbc:sqlite:" + file;
+			// db_files uri given in the resource path
+			String url = "jdbc:sqlite::resource:" + file;
 			// create a connection to the database
 			conn = DriverManager.getConnection(url);
 
