@@ -60,13 +60,15 @@ public class Guard_RESTInterface {
 		File directoryPath = new File(path);
 		String contents[] = directoryPath.list();
 
-		for (String content : contents) {
-			if (content.contains(".")) {
-				// is a file
-				files = files.concat(path + "/" + content + ",");
-			} else {
-				// is a directory
-				files = files.concat(fetch_files(path + "/" + content, ""));
+		if (contents != null) {
+			for (String content : contents) {
+				if (content.contains(".")) {
+					// is a file
+					files = files.concat(path + "/" + content + ",");
+				} else {
+					// is a directory
+					files = files.concat(fetch_files(path + "/" + content, ""));
+				}
 			}
 		}
 		return files.replace("src\\main\\java\\it\\unitn\\APCM\\ACME\\Guard\\", "");
@@ -130,7 +132,7 @@ public class Guard_RESTInterface {
 		String loginQuery = "SELECT pass FROM Users WHERE email=?";
 		PreparedStatement preparedStatement;
 
-		String stored_password = "";
+		String stored_password = null;
 
 		// Create the query and retrieve results from user db
 		try {
@@ -144,8 +146,11 @@ public class Guard_RESTInterface {
 			throw new RuntimeException(e);
 		}
 
-		// check if the password is valid with argon2
-		boolean validPassword = encoder.matches(password, stored_password);
+		boolean validPassword = false;
+		if (stored_password != null) {
+			// check if the password is valid with argon2
+			validPassword = encoder.matches(password, stored_password);
+		}
 
 		String response = "error";
 		HttpStatus status = HttpStatus.UNAUTHORIZED;
