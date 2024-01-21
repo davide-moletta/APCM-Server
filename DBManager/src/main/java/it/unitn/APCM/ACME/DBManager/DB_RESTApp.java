@@ -40,9 +40,6 @@ public class DB_RESTApp {
 		}
 		Shamir sh = new Shamir();
 		try {
-//			if (sss_path == null) {
-//				sss_path = Objects.requireNonNull(DB_RESTApp.class.getResource("/SSS.txt")).toString();
-//			}
 			masterKey = sh.getMasterSecret(sss_path);
 			app.run(args);
 			log.info("DB_RESTApp started");

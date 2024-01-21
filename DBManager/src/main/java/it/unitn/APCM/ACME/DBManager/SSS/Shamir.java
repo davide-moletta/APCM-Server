@@ -1,6 +1,8 @@
 package it.unitn.APCM.ACME.DBManager.SSS;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -169,7 +171,7 @@ public class Shamir {
   }
 
   private byte[] parse(String stringToParse){
-		if(stringToParse == ""){
+		if(Objects.equals(stringToParse, "")){
 			return null;
 		}
 		String[] parsedString = (stringToParse.split(","));
@@ -192,7 +194,7 @@ public class Shamir {
 
 		try {
 			if (path == null) {
-				path = Objects.requireNonNull(Shamir.class.getResource("/SSS.txt")).getPath();
+				path = new URI(Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResource("SSS.txt")).toString()).getPath();
 			}
 			String content = Files.readString(Paths.get(path), StandardCharsets.UTF_8);
 			String[] seedString = (content.split(";"));
@@ -205,6 +207,8 @@ public class Shamir {
 		} catch (IOException e) {
 			log.error("Impossible to retrieve the keys");
 			throw e;
+		} catch (URISyntaxException e) {
+			throw new RuntimeException(e);
 		}
 		this.random = new SecureRandom(seed);	
 		
