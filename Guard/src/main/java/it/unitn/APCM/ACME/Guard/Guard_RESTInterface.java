@@ -148,12 +148,14 @@ public class Guard_RESTInterface {
 		boolean validPassword = encoder.matches(password, stored_password);
 
 		String response = "error";
+		HttpStatus status = HttpStatus.UNAUTHORIZED;
 		if (validPassword) {
 			response = "success";
+			status = HttpStatus.OK;
 		}
 
 		HttpHeaders headers = new HttpHeaders();
-		ResponseEntity<String> entity = new ResponseEntity<>(response, headers, HttpStatus.CREATED);
+		ResponseEntity<String> entity = new ResponseEntity<>(response, headers, status);
 
 		return entity;
 	}
@@ -197,7 +199,7 @@ public class Guard_RESTInterface {
 
 		// sends the request and capture the response
 		RestTemplate restTemplate = new RestTemplate();
-		HttpStatus status = HttpStatus.CREATED;
+		HttpStatus status = HttpStatus.OK;
 		ClientResponse clientResponse = new ClientResponse(path, false, false, "");
 
 		try {
@@ -247,7 +249,7 @@ public class Guard_RESTInterface {
 		// creaft the request to the db interface
 		String DB_request_url = dbServer_url + "decryption_key?" +
 				"path_hash=" + (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8)) +
-				"&file_hash=" + "" +
+				"&file_hash=" +
 				"&open=false" + 
 				"&email=" + email +
 				"&user_groups=" + user.getGroups() +
@@ -256,6 +258,7 @@ public class Guard_RESTInterface {
 		log.trace("Requesting for: " + DB_request_url);
 
 		String responseString = "error";
+		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 
 		// sends the request and capture the response
 		RestTemplate restTemplate = new RestTemplate();
@@ -265,7 +268,7 @@ public class Guard_RESTInterface {
 			Response res = restTemplate.getForEntity(DB_request_url, Response.class).getBody();
 
 			if (res != null) {
-				if (res.get_w_mode() && newTextToSave.length() != 0) {
+				if (res.get_w_mode() && !newTextToSave.isEmpty()) {
 					byte[] keyBytes = res.get_key();
 					SecretKey encK = new SecretKeySpec(keyBytes, 0, keyBytes.length, algorithm);
 					byte[] textEnc = (new CryptographyPrimitive()).encrypt(newTextToSave.getBytes(), encK);
@@ -282,6 +285,7 @@ public class Guard_RESTInterface {
 
 					String res2 = restTemplate.postForEntity(DB_request2_url, null, String.class).getBody();
 					if(res2.equals("success")){
+						status = HttpStatus.CREATED;
 						responseString = "success";
 					}
 				}
@@ -291,7 +295,7 @@ public class Guard_RESTInterface {
 		}
 
 		HttpHeaders headers = new HttpHeaders();
-		ResponseEntity<String> entity = new ResponseEntity<>(responseString, headers, HttpStatus.CREATED);
+		ResponseEntity<String> entity = new ResponseEntity<>(responseString, headers, status);
 
 		return entity;
 	}
@@ -306,6 +310,7 @@ public class Guard_RESTInterface {
 			@RequestParam String rw_groups) throws IOException {
 
 		String response = "error";
+		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 
 		// creaft the request to the db interface
 		String DB_request_url = dbServer_url + "/newFile?" +
@@ -337,6 +342,7 @@ public class Guard_RESTInterface {
 				f.createNewFile();
 
 				response = "success";
+				status = HttpStatus.CREATED;
 			}
 		} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
 			log.error("Error in the response from DB server");
@@ -344,7 +350,7 @@ public class Guard_RESTInterface {
 
 		HttpHeaders headers = new HttpHeaders();
 
-		ResponseEntity<String> entity = new ResponseEntity<>(response, headers, HttpStatus.CREATED);
+		ResponseEntity<String> entity = new ResponseEntity<>(response, headers, status);
 
 		return entity;
 	}
@@ -372,12 +378,12 @@ public class Guard_RESTInterface {
 		// transform the array of groups into a string with separator ","
 		String groupsToString = "";
 		if (groups != null) {
-			for (int i = 0; i < groups.size(); i++) {
-				groupsToString = groupsToString.concat(groups.get(i) + ",");
+			for (String group : groups) {
+				groupsToString = groupsToString.concat(group + ",");
 			}
 			groupsToString = groupsToString.substring(0, groupsToString.length() - 1);
 		}
 
-		return  new UserPrivilege(admin, groupsToString);
+		return new UserPrivilege(admin, groupsToString);
 	}
 }
