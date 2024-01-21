@@ -93,7 +93,7 @@ public class Guard_RESTInterface {
 	 * Endpoint to create a new user
 	 */
 	@GetMapping("/newUser")
-	public void createUser(@RequestParam String email, @RequestParam String password,
+	public ResponseEntity createUser(@RequestParam String email, @RequestParam String password,
 			@RequestParam String groups, @RequestParam int admin) {
 
 		log.trace("got a requst to create a new user");
@@ -107,6 +107,9 @@ public class Guard_RESTInterface {
 		groups = "[\"" + groups + "\"]";
 		// System.out.println(groups);
 
+		String response = "error";
+		HttpStatus status = HttpStatus.BAD_REQUEST;
+
 		String insertQuery = "INSERT INTO Users(email, pass, groups, admin) VALUES (?,?,?,?)";
 		try {
 			PreparedStatement prepStatement = conn.prepareStatement(insertQuery);
@@ -116,9 +119,14 @@ public class Guard_RESTInterface {
 			prepStatement.setInt(4, admin);
 
 			prepStatement.executeUpdate();
+
+			response = "success";
+			status = HttpStatus.OK;
 		} catch (SQLException e) {
 			log.error("User already existent");
 		}
+
+		return new ResponseEntity<>(response, new HttpHeaders(), status);
 	}
 
 	/**
