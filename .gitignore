@@ -36,4 +36,7 @@ target/
 # SQLite
 *.sqlite
 
+# JKS
+*.jks
+
 SSS.txt
