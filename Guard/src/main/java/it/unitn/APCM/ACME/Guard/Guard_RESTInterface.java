@@ -326,7 +326,7 @@ public class Guard_RESTInterface {
 		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 
 		// creaft the request to the db interface
-		String DB_request_url = dbServer_url + "/newFile?" +
+		String DB_request_url = dbServer_url + "newFile?" +
 				"path_hash=" + (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8)) +
 				"&path=" + path +
 				"&email=" + email +
