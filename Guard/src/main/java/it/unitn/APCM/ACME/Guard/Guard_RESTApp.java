@@ -39,6 +39,7 @@ public class Guard_RESTApp {
 			// Leave the default value
 			srvdb = "localhost:8091";
 		}
+		// System.setProperty("javax.net.debug", "ssl:handshake"); // For debug
 		app.run(args);
 		log.info("Guard_RESTApp started");
 	}

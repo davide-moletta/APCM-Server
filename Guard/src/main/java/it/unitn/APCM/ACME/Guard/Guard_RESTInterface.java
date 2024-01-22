@@ -2,6 +2,7 @@ package it.unitn.APCM.ACME.Guard;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,10 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -25,6 +23,7 @@ import it.unitn.APCM.ACME.ServerCommon.JSONToArray;
 import it.unitn.APCM.ACME.ServerCommon.Response;
 import it.unitn.APCM.ACME.ServerCommon.UserPrivilege;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.io.File;
 import java.io.FileInputStream;
@@ -49,16 +48,19 @@ public class Guard_RESTInterface {
 	private final Connection conn = Guard_Connection.getDbconn();
 	private static final Logger log = LoggerFactory.getLogger(Guard_RESTInterface.class);
 	private static final String dbServer_url = String.format("https://%s/api/v1/", Guard_RESTApp.srvdb);
-	private static final String fP = "src\\main\\java\\it\\unitn\\APCM\\ACME\\Guard\\";
+	private static final String fP = URI.create(System.getProperty("java.io.tmpdir")+"/ACMEFILES/").toString();
 	// encryption algorithm
 	static final String algorithm = "AES";
 
 	Argon2PasswordEncoder encoder = new Argon2PasswordEncoder(32, 64, 1, 15 * 1024, 2);
 
-	private String fetch_files(String path, String files) {
+	@Autowired
+	private RestTemplate secureRestTemplate;
 
-		File directoryPath = new File(path);
-		String contents[] = directoryPath.list();
+	private String fetch_files(URI path, String files) {
+
+		File directoryPath = new File(path.getPath());
+		String[] contents = directoryPath.list();
 
 		if (contents != null) {
 			for (String content : contents) {
@@ -67,11 +69,11 @@ public class Guard_RESTInterface {
 					files = files.concat(path + "/" + content + ",");
 				} else {
 					// is a directory
-					files = files.concat(fetch_files(path + "/" + content, ""));
+					files = files.concat(fetch_files(URI.create(path + "/" + content), ""));
 				}
 			}
 		}
-		return files.replace("src\\main\\java\\it\\unitn\\APCM\\ACME\\Guard\\", "");
+		return files.replace(fP, "");
 	}
 
 	/**
@@ -81,12 +83,11 @@ public class Guard_RESTInterface {
 	public ResponseEntity<String> get_files() {
 
 		log.trace("got a request for available files");
-		String files = fetch_files(fP + "Files", "");
+		String files = fetch_files(URI.create(fP), "");
 
 		HttpHeaders headers = new HttpHeaders();
-		ResponseEntity<String> entity = new ResponseEntity<>(files, headers, HttpStatus.CREATED);
 
-		return entity;
+		return new ResponseEntity<>(files, headers, HttpStatus.CREATED);
 	}
 
 	/**
@@ -168,9 +169,8 @@ public class Guard_RESTInterface {
 		}
 
 		HttpHeaders headers = new HttpHeaders();
-		ResponseEntity<String> entity = new ResponseEntity<>(response, headers, status);
 
-		return entity;
+		return new ResponseEntity<>(response, headers, status);
 	}
 
 	/**
@@ -182,7 +182,7 @@ public class Guard_RESTInterface {
 
 		UserPrivilege user = getUserPrivilege(email);
 
-		InputStream inputStream = new FileInputStream(fP + path);
+		InputStream inputStream = new FileInputStream(URI.create(fP+path).toString());
 		// set up buffer
 		long fileSize = new File(fP + path).length();
 		byte[] allBytes = null;
@@ -211,14 +211,14 @@ public class Guard_RESTInterface {
 		log.trace("Requesting for: " + DB_request_url);
 
 		// sends the request and capture the response
-		RestTemplate restTemplate = new RestTemplate();
+		RestTemplate srt = secureRestTemplate;
 		HttpStatus status = HttpStatus.OK;
 		ClientResponse clientResponse = new ClientResponse(path, false, false, "");
 
 		try {
 
 			// get the response and decide accordingly
-			Response res = restTemplate.getForEntity(DB_request_url, Response.class).getBody();
+			Response res = srt.getForEntity(DB_request_url, Response.class).getBody();
 
 			if (res != null) {
 				if (res.get_auth()) {
@@ -244,9 +244,8 @@ public class Guard_RESTInterface {
 		}
 
 		HttpHeaders headers = new HttpHeaders();
-		ResponseEntity<ClientResponse> entity = new ResponseEntity<>(clientResponse, headers, status);
 
-		return entity;
+		return new ResponseEntity<>(clientResponse, headers, status);
 	}
 
 	/**
@@ -274,11 +273,11 @@ public class Guard_RESTInterface {
 		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 
 		// sends the request and capture the response
-		RestTemplate restTemplate = new RestTemplate();
+		RestTemplate srt = secureRestTemplate;
 
 		try {
 			// get the response and decide accordingly
-			Response res = restTemplate.getForEntity(DB_request_url, Response.class).getBody();
+			Response res = srt.getForEntity(DB_request_url, Response.class).getBody();
 
 			if (res != null) {
 				if (res.get_w_mode() && !newTextToSave.isEmpty()) {
@@ -296,7 +295,8 @@ public class Guard_RESTInterface {
 						"path_hash=" + (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8)) +
 						"&file_hash=" + (new CryptographyPrimitive()).getHash(textEnc);
 
-					String res2 = restTemplate.postForEntity(DB_request2_url, null, String.class).getBody();
+					String res2 = srt.postForEntity(DB_request2_url, null, String.class).getBody();
+					assert res2 != null;
 					if(res2.equals("success")){
 						status = HttpStatus.CREATED;
 						responseString = "success";
@@ -308,9 +308,8 @@ public class Guard_RESTInterface {
 		}
 
 		HttpHeaders headers = new HttpHeaders();
-		ResponseEntity<String> entity = new ResponseEntity<>(responseString, headers, status);
 
-		return entity;
+		return new ResponseEntity<>(responseString, headers, status);
 	}
 
 	/**
@@ -320,7 +319,7 @@ public class Guard_RESTInterface {
 	public ResponseEntity<String> new_file(@RequestParam String email,
 			@RequestParam String path,
 			@RequestParam String r_groups,
-			@RequestParam String rw_groups) throws IOException {
+			@RequestParam String rw_groups) throws Exception {
 
 		String response = "error";
 		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -336,11 +335,12 @@ public class Guard_RESTInterface {
 		log.trace("Requesting for: " + DB_request_url);
 
 		// sends the request and capture the response
-		RestTemplate restTemplate = new RestTemplate();
+		RestTemplate srt = secureRestTemplate;
 
 		try {
 			// get the response and decide accordingly
-			String res = restTemplate.getForEntity(DB_request_url, String.class).getBody();
+			ResponseEntity<String> ent = srt.getForEntity(DB_request_url, String.class);
+			String res = ent.getBody();
 
 			if (res != null && res.equals("success")) {
 				String[] splittedPath = path.split("/");
@@ -349,9 +349,10 @@ public class Guard_RESTInterface {
 				for (int i = 0; i < indexName; i++) {
 					dirPath += "/" + splittedPath[i];
 				}
-				File dir = new File(fP + dirPath);
+				String realpath = URI.create(fP + dirPath).getPath();
+				File dir = new File(realpath);
 				dir.mkdirs();
-				File f = new File(fP + dirPath, splittedPath[indexName]);
+				File f = new File(realpath, splittedPath[indexName]);
 				f.createNewFile();
 
 				response = "success";
@@ -363,9 +364,7 @@ public class Guard_RESTInterface {
 
 		HttpHeaders headers = new HttpHeaders();
 
-		ResponseEntity<String> entity = new ResponseEntity<>(response, headers, status);
-
-		return entity;
+		return new ResponseEntity<>(response, headers, status);
 	}
 
 	private UserPrivilege getUserPrivilege(String email){
