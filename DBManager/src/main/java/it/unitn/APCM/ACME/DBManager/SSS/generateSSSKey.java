@@ -105,7 +105,6 @@ public class generateSSSKey {
 		//return null;
 		
 	    Map<Integer, byte[]> keySplitted = sc.split(key);
-		String v;
 		for(Map.Entry<Integer, byte[]> entry : keySplitted.entrySet()){
 			System.out.println("Key= " + entry.getKey() + ", Value = " + entry.getValue());
 		}

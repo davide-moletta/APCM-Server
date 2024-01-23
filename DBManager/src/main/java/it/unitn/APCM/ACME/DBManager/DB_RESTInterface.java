@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.security.cert.X509Certificate;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -218,7 +217,6 @@ public class DB_RESTInterface {
 	public ResponseEntity<String> save_File(@RequestParam(value = "path_hash") String path_hash,
 			@RequestParam(value = "file_hash") String file_hash) {
 
-		boolean error = false;
 		String res = "error";
 
 		String updateHashQuery = "UPDATE Files SET file_hash = ? WHERE path_hash = ?";

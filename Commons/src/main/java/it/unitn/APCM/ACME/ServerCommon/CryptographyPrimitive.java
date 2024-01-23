@@ -1,6 +1,5 @@
 package it.unitn.APCM.ACME.ServerCommon;
 
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;

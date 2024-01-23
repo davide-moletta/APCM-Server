@@ -16,7 +16,6 @@ import java.util.StringJoiner;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import it.unitn.APCM.ACME.DBManager.DB_RESTApp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
