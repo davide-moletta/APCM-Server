@@ -78,7 +78,6 @@ public class generateSSSKey {
 			}
 			System.out.println(new String(key));
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			log.error("Error in saving the keys in the file");
 		}
 		

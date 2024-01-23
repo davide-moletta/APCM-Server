@@ -28,6 +28,8 @@ import it.unitn.APCM.ACME.ServerCommon.UserPrivilege;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -223,6 +225,10 @@ public class Guard_RESTInterface {
 
 		ClientResponse clientResponse = new ClientResponse(path, false, false, "");
 
+		if (!securePath(fP, path)) {
+			return new ResponseEntity<>(clientResponse, headers, status);
+		}
+
 		if (JWT_Utils.validateToken(jwt, email)) {
 
 			UserPrivilege user = new UserPrivilege(JWT_Utils.extractAdmin(jwt), JWT_Utils.extractGroups(jwt));
@@ -307,6 +313,10 @@ public class Guard_RESTInterface {
 		HttpHeaders headers = new HttpHeaders();
 		HttpStatus status = HttpStatus.UNAUTHORIZED;
 
+		if (!securePath(fP, path)) {
+			return new ResponseEntity<>(response, headers, status);
+		}
+
 		if (JWT_Utils.validateToken(jwt, email)) {
 
 			UserPrivilege user = new UserPrivilege(JWT_Utils.extractAdmin(jwt), JWT_Utils.extractGroups(jwt));
@@ -378,6 +388,10 @@ public class Guard_RESTInterface {
 		HttpHeaders headers = new HttpHeaders();
 		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 		String response = "error";
+
+		if (!securePath(fP, path)) {
+			return new ResponseEntity<>(response, headers, status);
+		}
 
 		log.trace("got a request to create a new file from: " + email);
 
@@ -454,5 +468,17 @@ public class Guard_RESTInterface {
 		}
 
 		return new UserPrivilege(admin, groupsToString);
+	}
+
+	private boolean securePath(String basePath, String userPath){
+		Path path = Paths.get(basePath).normalize();
+        Path resolvedPath = path.resolve(userPath).normalize();
+
+        if (!resolvedPath.startsWith(path)) {
+            log.error("Invalid path: path traversal attempt detected");
+			return false;
+        }
+
+        return true;
 	}
 }
