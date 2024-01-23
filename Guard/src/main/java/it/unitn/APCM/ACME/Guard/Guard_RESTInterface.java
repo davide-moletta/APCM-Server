@@ -48,7 +48,8 @@ public class Guard_RESTInterface {
 	private final Connection conn = Guard_Connection.getDbconn();
 	private static final Logger log = LoggerFactory.getLogger(Guard_RESTInterface.class);
 	private static final String dbServer_url = String.format("https://%s/api/v1/", Guard_RESTApp.srvdb);
-	private static final String fP = URI.create(System.getProperty("java.io.tmpdir")+"/ACMEFILES/").toString();
+	//private static final String fP = URI.create(System.getProperty("java.io.tmpdir")+  "/ACMEFILES/").toString();
+	private static final String fP = (((new File(System.getProperty("java.io.tmpdir"), "ACMEFILES")).toURI()).toString()).substring(6);
 	// encryption algorithm
 	static final String algorithm = "AES";
 
@@ -58,7 +59,7 @@ public class Guard_RESTInterface {
 	private RestTemplate secureRestTemplate;
 
 	private String fetch_files(URI path, String files) {
-
+		//System.out.println(fP);
 		File directoryPath = new File(path.getPath());
 		String[] contents = directoryPath.list();
 
@@ -66,10 +67,10 @@ public class Guard_RESTInterface {
 			for (String content : contents) {
 				if (content.contains(".")) {
 					// is a file
-					files = files.concat(path + "/" + content + ",");
+					files = files.concat(path + content + ",");
 				} else {
 					// is a directory
-					files = files.concat(fetch_files(URI.create(path + "/" + content), ""));
+					files = files.concat(fetch_files(URI.create(path + content + "/"), ""));
 				}
 			}
 		}
@@ -181,10 +182,13 @@ public class Guard_RESTInterface {
 			@RequestParam String path) throws IOException {
 
 		UserPrivilege user = getUserPrivilege(email);
-
-		InputStream inputStream = new FileInputStream(URI.create(fP+path).toString());
+		//System.out.println(fP);
+		//System.out.println(path);
+		String completePath = URI.create(fP + path).toString();
+		//System.out.println(completePath);
+		InputStream inputStream = new FileInputStream(completePath);
 		// set up buffer
-		long fileSize = new File(fP + path).length();
+		long fileSize = new File(completePath).length();
 		byte[] allBytes = null;
 		if ((int) fileSize != 0) {
 			allBytes = new byte[(int) fileSize];
@@ -257,7 +261,7 @@ public class Guard_RESTInterface {
 			@RequestBody String newTextToSave) throws IOException {
 
 		UserPrivilege user = getUserPrivilege(email);
-
+		//System.out.println(path);
 		// creaft the request to the db interface
 		String DB_request_url = dbServer_url + "decryption_key?" +
 				"path_hash=" + (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8)) +
@@ -286,7 +290,8 @@ public class Guard_RESTInterface {
 					byte[] textEnc = (new CryptographyPrimitive()).encrypt(newTextToSave.getBytes(), encK);
 
 					// Save encrypted file to file
-					OutputStream outputStream = new FileOutputStream(fP + path);
+					String completePath = URI.create(fP+path).toString();
+					OutputStream outputStream = new FileOutputStream(completePath);
 					outputStream.write(textEnc, 0, textEnc.length);
 					outputStream.flush();
 					outputStream.close();
