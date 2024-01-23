@@ -48,23 +48,25 @@ public class Guard_RESTInterface {
 	private final Connection conn = Guard_Connection.getDbconn();
 	private static final Logger log = LoggerFactory.getLogger(Guard_RESTInterface.class);
 	private static final String dbServer_url = String.format("https://%s/api/v1/", Guard_RESTApp.srvdb);
-	//private static final String fP = URI.create(System.getProperty("java.io.tmpdir")+  "/ACMEFILES/").toString();
-	private static final String fP = (((new File(System.getProperty("java.io.tmpdir"), "ACMEFILES")).toURI()).toString()).substring(6);
+
+	//private static final String fP = (((new File(System.getProperty("java.io.tmpdir"), "ACMEFILES")).toURI()).toString()).substring(6);
+	private static final String fP = URI.create("Guard/src/main/java/it/unitn/APCM/ACME/Guard/Files/").toString();
+
 	// encryption algorithm
 	static final String algorithm = "AES";
-
 	Argon2PasswordEncoder encoder = new Argon2PasswordEncoder(32, 64, 1, 15 * 1024, 2);
 
 	@Autowired
 	private RestTemplate secureRestTemplate;
 
 	private String fetch_files(URI path, String files) {
-		//System.out.println(fP);
+		System.out.println(fP);
 		File directoryPath = new File(path.getPath());
 		String[] contents = directoryPath.list();
 
 		if (contents != null) {
 			for (String content : contents) {
+				System.out.println("c "+content);
 				if (content.contains(".")) {
 					// is a file
 					files = files.concat(path + content + ",");
@@ -355,6 +357,8 @@ public class Guard_RESTInterface {
 					dirPath += "/" + splittedPath[i];
 				}
 				String realpath = URI.create(fP + dirPath).getPath();
+				System.out.println("dirPath: " + fP);
+				System.out.println("path: " + realpath);
 				File dir = new File(realpath);
 				dir.mkdirs();
 				File f = new File(realpath, splittedPath[indexName]);
