@@ -17,8 +17,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.crypto.SecretKey;
 
@@ -28,59 +26,37 @@ public class DB_RESTInterface {
 	// Connection statically instantiated
 	private final Connection conn = DB_Connection.getDbconn();
 	private static final Logger log = LoggerFactory.getLogger(DB_RESTInterface.class);
-	
-	/**
-	 * Endpoint for list all file for a specific owner
-	 */
-	@GetMapping("/files")
-	public Map<String, String> get_files(@RequestParam(value = "owner") String owner) {
-		HashMap<String, String> res = new HashMap<>();
-		String selectQuery = "SELECT path_hash, path FROM Files WHERE owner = ?";
-		PreparedStatement preparedStatement;
-		try {
-			preparedStatement = conn.prepareStatement(selectQuery);
-			preparedStatement.setString(1, owner);
-			ResultSet rs = preparedStatement.executeQuery();
-
-			while (rs.next()) {
-				res.put("path_hash", rs.getString("path_hash"));
-				res.put("path", rs.getString("path"));
-			}
-		} catch (SQLException e) {
-			log.error("Impossible retrieving the files");
-		}
-		return res;
-	}
 
 	/**
 	 * Endpoint for getting the password of the specified file if authorized
-	 */        
+	 */
 	@GetMapping("/decryption_key")
 	public ResponseEntity<Response> get_key(@RequestParam(value = "path_hash") String path_hash,
 			@RequestParam(value = "file_hash") String file_hash,
-			@RequestParam(value = "open") boolean open,
 			@RequestParam(value = "email") String email,
 			@RequestParam(value = "user_groups") String user_group,
 			@RequestParam(value = "admin") String admin) {
-				
+
 		Response res = new Response(path_hash, email, false, false, null);
 		ArrayList<String> user_groups = new ArrayList<String>(Arrays.asList(user_group.split(",")));
+		HttpHeaders headers = new HttpHeaders();
+		HttpStatus status = HttpStatus.UNAUTHORIZED;
 
-		String getInfoQuery = "SELECT path_hash, owner, rw_groups, r_groups, file_hash FROM Files WHERE path_hash = ?";
+		String getInfoQuery = "SELECT encryption_key, path_hash, owner, rw_groups, r_groups, file_hash FROM Files WHERE path_hash = ?";
 		PreparedStatement ps;
 		try {
 			ps = conn.prepareStatement(getInfoQuery);
 			ps.setString(1, path_hash);
 			ResultSet rs = ps.executeQuery();
+
 			while (rs.next()) {
 				if (rs.isFirst()) {
-					if(open == false || rs.getString("file_hash").equals(file_hash)){
-						if (admin.equals("1")) {
-							log.trace("User is an admin");
-							res.set_auth(true);
-							res.set_w_mode(true);
-						} else if (rs.getString("owner").equals(email)) {
-							log.trace("User is the owner for the file requested");
+					if (file_hash.equals("") || rs.getString("file_hash").equals(file_hash)) {
+						byte[] encryptionKey = null;
+						encryptionKey = (rs.getBytes("encryption_key"));
+
+						if (admin.equals("1") || rs.getString("owner").equals(email)) {
+							log.trace("User is an admin or the owner of the file");
 							res.set_auth(true);
 							res.set_w_mode(true);
 						} else {
@@ -98,7 +74,13 @@ public class DB_RESTInterface {
 									// no break because can be also present after another g in the rw_groups
 								}
 							}
+						}
 
+						if (res.get_auth() && encryptionKey != null) {
+							byte[] decKey = (new CryptographyPrimitive()).decrypt(encryptionKey,
+									DB_RESTApp.masterKey);
+							res.set_key(decKey);
+							status = HttpStatus.CREATED;
 						}
 					} else {
 						log.error("File corrupted");
@@ -114,41 +96,14 @@ public class DB_RESTInterface {
 		} catch (SQLException | JsonProcessingException e) {
 			throw new RuntimeException(e);
 		}
-	
-		if (res.get_auth()) {
-			// Check ok then return key
-			String selectQuery = "SELECT encryption_key FROM Files WHERE path_hash = ?";
-			try {
-				ps = conn.prepareStatement(selectQuery);
-				ps.setString(1, path_hash);
-				ResultSet rs = ps.executeQuery();
 
-				byte[] encryptionKey = null;
-
-				while (rs.next()) {
-					encryptionKey = (rs.getBytes("encryption_key"));
-				}
-
-				if (encryptionKey != null) {
-					byte[] decKey = (new CryptographyPrimitive()).decrypt(encryptionKey, DB_RESTApp.masterKey);
-				 	res.set_key(decKey);
-				}
-			} catch (SQLException e) {
-				throw new RuntimeException(e);
-			}
-		} 
-
-		HttpHeaders headers = new HttpHeaders();
-		
-		ResponseEntity<Response> entity = new ResponseEntity<>(res, headers, HttpStatus.CREATED);
-
-		return entity;
+		return new ResponseEntity<>(res, headers, status);
 	}
 
 	/**
 	 * Endpoint for getting the password of the specified file if authorized
 	 */
-	@GetMapping("/newFile")
+	@PostMapping("/newFile")
 	public ResponseEntity<String> new_File(@RequestParam(value = "path_hash") String path_hash,
 			@RequestParam(value = "path") String path,
 			@RequestParam(value = "email") String email,
@@ -157,6 +112,8 @@ public class DB_RESTInterface {
 
 		boolean error = false;
 		String res = "error";
+		HttpHeaders headers = new HttpHeaders();
+		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 
 		String getInfoQuery = "SELECT path_hash FROM Files WHERE path_hash = ?";
 		PreparedStatement ps;
@@ -173,11 +130,11 @@ public class DB_RESTInterface {
 			throw new RuntimeException(e);
 		}
 
-		if(!error){
-			//generate new key 
+		if (!error) {
+			// generate new key
 			SecretKey sK = (new CryptographyPrimitive()).getSymmetricKey();
 			byte[] enc_key = (new CryptographyPrimitive()).encrypt(sK.getEncoded(), DB_RESTApp.masterKey);
-			
+
 			r_groups = r_groups.replace(",", "\",\"");
 			r_groups = "[\"" + r_groups + "\"]";
 
@@ -195,19 +152,16 @@ public class DB_RESTInterface {
 				prepStatement.setString(6, r_groups);
 				prepStatement.setBytes(7, enc_key);
 
-				prepStatement.executeUpdate();
-
-				res = "success";
+				if (prepStatement.executeUpdate() != 0) {
+					status = HttpStatus.CREATED;
+					res = "success";
+				}
 			} catch (SQLException e) {
-				log.error("Error in inserting file in the db. Path_hash is not uniques");
+				log.error("Error in inserting file in the db. Path_hash is not unique");
 			}
 		}
 
-		HttpHeaders headers = new HttpHeaders();
-
-		ResponseEntity<String> entity = new ResponseEntity<>(res, headers, HttpStatus.CREATED);
-
-		return entity;
+		return new ResponseEntity<>(res, headers, status);
 	}
 
 	/**
@@ -218,6 +172,8 @@ public class DB_RESTInterface {
 			@RequestParam(value = "file_hash") String file_hash) {
 
 		String res = "error";
+		HttpHeaders headers = new HttpHeaders();
+		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 
 		String updateHashQuery = "UPDATE Files SET file_hash = ? WHERE path_hash = ?";
 		PreparedStatement ps;
@@ -225,17 +181,14 @@ public class DB_RESTInterface {
 			ps = conn.prepareStatement(updateHashQuery);
 			ps.setString(1, file_hash);
 			ps.setString(2, path_hash);
-			int rs = ps.executeUpdate();
-			if(rs == 1){
+			if (ps.executeUpdate() != 0) {
 				res = "success";
+				status = HttpStatus.CREATED;
 			}
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
 
-		HttpHeaders headers = new HttpHeaders();
-		ResponseEntity<String> entity = new ResponseEntity<>(res, headers, HttpStatus.CREATED);
-
-		return entity;
+		return new ResponseEntity<>(res, headers, status);
 	}
 }

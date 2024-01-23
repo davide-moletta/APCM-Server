@@ -154,8 +154,6 @@ public class Guard_RESTInterface {
 		String email = null, password = null;
 		ObjectMapper objectMapper = new ObjectMapper();
 
-		log.trace("got a login request from: " + email);
-
 		try {
 			JsonNode jsonNode = objectMapper.readTree(credentials);
 
@@ -164,6 +162,8 @@ public class Guard_RESTInterface {
 		} catch (Exception e) {
 			e.printStackTrace(); // Handle the exception appropriately
 		}
+
+		log.trace("got a login request from: " + email);
 
 		String loginQuery = "SELECT pass FROM Users WHERE email=?";
 		PreparedStatement preparedStatement;
@@ -250,7 +250,6 @@ public class Guard_RESTInterface {
 			String DB_request_url = dbServer_url + "decryption_key?" +
 					"path_hash=" + (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8)) +
 					"&file_hash=" + file_hash +
-					"&open=true" +
 					"&email=" + email +
 					"&user_groups=" + user.getGroups() +
 					"&admin=" + user.getAdmin();
@@ -287,6 +286,7 @@ public class Guard_RESTInterface {
 				status = HttpStatus.INTERNAL_SERVER_ERROR;
 				clientResponse = null;
 				log.error("Error in the response from DB server");
+				System.out.println(e);
 			}
 		}
 
@@ -315,7 +315,6 @@ public class Guard_RESTInterface {
 			String DB_request_url = dbServer_url + "decryption_key?" +
 					"path_hash=" + (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8)) +
 					"&file_hash=" +
-					"&open=false" +
 					"&email=" + email +
 					"&user_groups=" + user.getGroups() +
 					"&admin=" + user.getAdmin();
@@ -398,7 +397,7 @@ public class Guard_RESTInterface {
 
 			try {
 				// get the response and decide accordingly
-				ResponseEntity<String> ent = srt.getForEntity(DB_request_url, String.class);
+				ResponseEntity<String> ent = srt.postForEntity(DB_request_url, null, String.class);
 				String res = ent.getBody();
 
 				if (res != null && res.equals("success")) {
