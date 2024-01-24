@@ -61,7 +61,7 @@ public class Guard_RESTInterface {
 
 	// encryption algorithm
 	static final String algorithm = "AES";
-	Argon2PasswordEncoder encoder = new Argon2PasswordEncoder(32, 64, 1, 15 * 1024, 2);
+	Argon2PasswordEncoder encoder = new Argon2PasswordEncoder(32, 64, 1, 32 * 1024, 2);
 
 	@Autowired
 	private RestTemplate secureRestTemplate;
@@ -73,6 +73,7 @@ public class Guard_RESTInterface {
 		File directoryPath = new File(path.getPath());
 		String[] contents = directoryPath.list();
 
+		// TODO: check Dir of File and return a JSON list
 		if (contents != null) {
 			for (String content : contents) {
 				if (content.contains(".")) {
@@ -111,42 +112,42 @@ public class Guard_RESTInterface {
 	/**
 	 * Endpoint to create a new user
 	 */
-	// @GetMapping("/newUser")
-	// public ResponseEntity createUser(@RequestParam String email, @RequestParam String password,
-	// 		@RequestParam String groups, @RequestParam int admin) {
+	 @GetMapping("/newUser")
+	 public ResponseEntity createUser(@RequestParam String email, @RequestParam String password,
+	 		@RequestParam String groups, @RequestParam int admin) {
 
-	// 	log.trace("got a requst to create a new user");
+	 	log.trace("got a request to create a new user");
 
-	// 	// generate hash with argon2
-	// 	String encoded_password = encoder.encode(password);
-	// 	// System.out.println("generated pass: " + encoded_password);
+	 	// generate hash with argon2
+	 	String encoded_password = encoder.encode(password);
+	 	// System.out.println("generated pass: " + encoded_password);
 
-	// 	// format groups
-	// 	groups = groups.replace(",", "\",\"");
-	// 	groups = "[\"" + groups + "\"]";
-	// 	// System.out.println(groups);
+	 	// format groups
+	 	groups = groups.replace(",", "\",\"");
+	 	groups = "[\"" + groups + "\"]";
+	 	// System.out.println(groups);
 
-	// 	String response = "error";
-	// 	HttpStatus status = HttpStatus.BAD_REQUEST;
+	 	String response = "error";
+	 	HttpStatus status = HttpStatus.BAD_REQUEST;
 
-	// 	String insertQuery = "INSERT INTO Users(email, pass, groups, admin) VALUES (?,?,?,?)";
-	// 	try {
-	// 		PreparedStatement prepStatement = conn.prepareStatement(insertQuery);
-	// 		prepStatement.setString(1, email);
-	// 		prepStatement.setString(2, encoded_password);
-	// 		prepStatement.setString(3, groups);
-	// 		prepStatement.setInt(4, admin);
+	 	String insertQuery = "INSERT INTO Users(email, pass, groups, admin) VALUES (?,?,?,?)";
+	 	try {
+	 		PreparedStatement prepStatement = conn.prepareStatement(insertQuery);
+	 		prepStatement.setString(1, email);
+	 		prepStatement.setString(2, encoded_password);
+	 		prepStatement.setString(3, groups);
+	 		prepStatement.setInt(4, admin);
 
-	// 		prepStatement.executeUpdate();
+	 		prepStatement.executeUpdate();
 
-	// 		response = "success";
-	// 		status = HttpStatus.OK;
-	// 	} catch (SQLException e) {
-	// 		log.error("User already existent");
-	// 	}
+	 		response = "success";
+	 		status = HttpStatus.OK;
+	 	} catch (SQLException e) {
+	 		log.error("User already existent");
+	 	}
 
-	// 	return new ResponseEntity<>(response, new HttpHeaders(), status);
-	// }
+	 	return new ResponseEntity<>(response, new HttpHeaders(), status);
+	 }
 
 	/**
 	 * Endpoint to login

@@ -5,16 +5,23 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SecureDigestAlgorithm;
+import it.unitn.APCM.ACME.ServerCommon.CryptographyPrimitive;
 import org.springframework.stereotype.Service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
 @Service
 public class JWT_Utils {
 
-    private String SECRET_KEY = System.getenv("JWT_SECRET");
+    private static final SecretKey SECRET_KEY = Keys.hmacShaKeyFor((new CryptographyPrimitive().getSymmetricKey()).getEncoded());
+    private static int EXP_TIME = 1000 * 60 * 30 * 1;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -40,7 +47,10 @@ public class JWT_Utils {
     }
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
+        return Jwts.parser().verifyWith(SECRET_KEY)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     private Boolean isTokenExpired(String token) {
@@ -55,9 +65,10 @@ public class JWT_Utils {
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
-        return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY).compact();
+        long start_time = System.currentTimeMillis();
+        return Jwts.builder().claims(claims).subject(subject).issuedAt(new Date(start_time))
+                .expiration(new Date(start_time + EXP_TIME))
+                .signWith(SECRET_KEY).compact();
     }
 
     public Boolean validateToken(String token, String email) {
