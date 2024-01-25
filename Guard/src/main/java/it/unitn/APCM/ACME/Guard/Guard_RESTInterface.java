@@ -7,7 +7,9 @@ import org.springframework.boot.configurationprocessor.json.JSONArray;
 import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -495,14 +497,36 @@ public class Guard_RESTInterface {
 					File dir = new File(realpath);
 					dir.mkdirs();
 					File f = new File(realpath, splittedPath[indexName]);
-					f.createNewFile();
-
-					// Set the response header and status
-					response = "success";
-					status = HttpStatus.CREATED;
+					if(f.createNewFile()){
+						// Set the response header and status
+						response = "success";
+						status = HttpStatus.CREATED;
+					} else {
+						throw new ResourceAccessException("File already esisting: " + realpath + "" + splittedPath[indexName]);
+					}
 				}
-			} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
+			} catch (HttpClientErrorException | HttpServerErrorException e) {
 				log.error("Error in the response from DB server");
+			} catch(ResourceAccessException | IOException e){
+				log.error("Error in the creation of the file");
+
+				String DB_delete_url = dbServer_url + "deleteFile?" +
+					"path_hash=" + (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8));
+				
+				try{
+					log.trace(DB_delete_url);
+					ResponseEntity<String> ent = srt.exchange(DB_delete_url, HttpMethod.DELETE, null,String.class);
+				
+					HttpStatusCode res = ent.getStatusCode();
+					log.trace("" + res);
+					if(res == HttpStatus.OK){
+						log.trace("File deleted");
+					} else {
+						log.error("Delete impossible");
+					}
+				} catch(HttpClientErrorException | HttpServerErrorException ex){
+					log.error("Impossible to delete");
+				}
 			}
 		} else {
 			// Token is not valid, return unauthorized

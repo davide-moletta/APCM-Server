@@ -224,4 +224,37 @@ public class DB_RESTInterface {
 
 		return new ResponseEntity<>(res, headers, status);
 	}
+
+	/**
+	 * Endpoint to delete a file
+	 */
+	@DeleteMapping("/deleteFile")
+	public ResponseEntity<String> delete_File(@RequestParam(value = "path_hash") String path_hash) {
+
+		// Setup the response and headers
+		HttpHeaders headers = new HttpHeaders();
+		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+		String res = "error";
+
+		log.trace("Request to delete a file");
+
+		// Prepare the query to delete the file
+		String updateHashQuery = "DELETE FROM Files WHERE path_hash = ?";
+		PreparedStatement ps;
+		try {
+			// Set the parameters
+			ps = conn.prepareStatement(updateHashQuery);
+			ps.setString(1, path_hash);
+			// Execute the query and check if it was successful
+			if (ps.executeUpdate() != 0) {
+				res = "success";
+				status = HttpStatus.OK;
+			}
+		} catch (SQLException e) {
+			log.error("Error in deleting file in the db: " + e.getMessage());
+			throw new RuntimeException(e);
+		}
+
+		return new ResponseEntity<>(res, headers, status);
+	}
 }

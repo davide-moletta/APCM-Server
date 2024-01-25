@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import it.unitn.APCM.ACME.ServerCommon.CryptographyPrimitive;
+
 import java.util.*;
 
 import org.mitre.secretsharing.Part;
@@ -44,7 +46,12 @@ public class DB_RESTApp {
 
 		try {
 			byte[] keyByte = Secrets.join(parts);
-			masterKey =  new SecretKeySpec(keyByte, 0, keyByte.length, "AES");
+			SecretKey shamirKey =  new SecretKeySpec(keyByte, 0, keyByte.length, "AES");
+			String effEncKey = System.getenv("EFFECTIVE_ENCRYPTED_KEY");
+			byte[] effEncKeyBytes  = Base64.getDecoder().decode(effEncKey);
+			byte[] masterKeyByte = (new CryptographyPrimitive()).decrypt(effEncKeyBytes, shamirKey);
+			masterKey = new SecretKeySpec(masterKeyByte, 0, masterKeyByte.length, "AES");
+
 			app.run(args);
 			log.info("DB_RESTApp started");
 		}

@@ -7,6 +7,9 @@ import java.util.function.Function;
 
 import io.jsonwebtoken.security.Keys;
 import it.unitn.APCM.ACME.ServerCommon.CryptographyPrimitive;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import io.jsonwebtoken.Claims;
@@ -16,7 +19,8 @@ import javax.crypto.SecretKey;
 
 @Service
 public class JWT_Utils {
-
+	// Logger
+	private static final Logger log = LoggerFactory.getLogger(Guard_RESTInterface.class);
     // Secret key to encrypt and decrypt the token
     private static final SecretKey SECRET_KEY = Keys
             .hmacShaKeyFor((new CryptographyPrimitive().getSymmetricKey()).getEncoded());
@@ -81,7 +85,14 @@ public class JWT_Utils {
 
     // Validate the token
     public Boolean validateToken(String token, String email) {
-        final String username = extractUsername(token);
-        return (username.equals(email) && !isTokenExpired(token));
+        boolean res = false;
+        try{
+            final String username = extractUsername(token);
+            res = (username.equals(email) && !isTokenExpired(token));
+        } catch(Exception e){
+            log.error("Error in validating JWT");
+        }
+
+        return res;
     }
 }
