@@ -21,30 +21,35 @@ public class CryptographyPrimitive {
     static final int keyByteLen = 32;
     static final int IVLEN = 12;
 
+    // Function that returns the hash of a byte array
     public String getHash(byte[] hash) {
-		try {
-			MessageDigest md = MessageDigest.getInstance("SHA-512");
-			byte[] bytes = md.digest(hash);
-			StringBuilder sb = new StringBuilder();
-			for (int i = 0; i < bytes.length; i++) {
-				sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
-			}
-			return sb.toString();
-		} catch (NoSuchAlgorithmException e) {
-			return "";
-			// throw new RuntimeException(e);
-		}
-	}
-    
+        try {
+            // Instantiate the SHA-512
+            MessageDigest md = MessageDigest.getInstance("SHA-512");
+            // Compute the hash
+            byte[] bytes = md.digest(hash);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < bytes.length; i++) {
+                sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            return "";
+        }
+    }
+
+    // Function to generate a random symmetric key
     public SecretKey getSymmetricKey() {
         SecretKey cipherKey = null;
 
         // if no valid data read from file, create new
         KeyGenerator keygen;
         try {
+            // instantiate key generator with the specified algorithm
             keygen = KeyGenerator.getInstance(algorithm);
             // specify key length in bits
             keygen.init(keyByteLen * 8);
+            // generate the key
             cipherKey = keygen.generateKey();
         } catch (NoSuchAlgorithmException e) {
             return null;
@@ -52,7 +57,7 @@ public class CryptographyPrimitive {
         return cipherKey;
     }
 
-    // encrypt key
+    // Function to encrypt a byte array with a symmetric key
     public byte[] encrypt(byte[] textToEnc, SecretKey key) {
         // check that there is some data to encrypt
         if (textToEnc.length == 0) {
@@ -86,7 +91,7 @@ public class CryptographyPrimitive {
         }
     }
 
-    // decrypt key
+    // Function to decrypt a byte array with a symmetric key
     public byte[] decrypt(byte[] encText, SecretKey key) {
         // check that there is some data to decrypt
         if (encText.length == 0) {

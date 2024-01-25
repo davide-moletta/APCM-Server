@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 
+// Used to connect to the sqlite database of users
 public class Guard_Connection {
 	private static final JDBC_Connection dbconn = new JDBC_Connection("db_users.sqlite");
 	private static final Logger log = LoggerFactory.getLogger(Guard_Connection.class);

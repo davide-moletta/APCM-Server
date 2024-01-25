@@ -40,7 +40,6 @@ public class DB_RESTApp {
 		}
 		Shamir sh = new Shamir();
 		try {
-			// System.setProperty("javax.net.debug", "ssl:handshake"); // For debug
 			masterKey = sh.getMasterSecret(sss_path);
 			app.run(args);
 			log.info("DB_RESTApp started");

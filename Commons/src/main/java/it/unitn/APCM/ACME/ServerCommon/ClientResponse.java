@@ -14,10 +14,6 @@ public class ClientResponse {
         this.text = text;
     }
     
-    /*
-     * SETTER
-     */
-
     public void set_path(String path) {
         this.path = path;
     }
@@ -33,10 +29,6 @@ public class ClientResponse {
     public void set_w_mode(boolean w_mode) {
         this.w_mode = w_mode;
     }
-
-    /*
-     * GETTER
-     */
 
     public String get_path() {
         return this.path;

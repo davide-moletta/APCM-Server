@@ -15,9 +15,6 @@ public class Response {
         this.key = key;
     }
 
-    /*
-     * SETTER
-     */
     public void set_path_hash(String path_hash) {this.path_hash = path_hash;}
 
     public void set_email(String email) {this.email = email;}
@@ -28,9 +25,6 @@ public class Response {
 
     public void set_auth(boolean auth) {this.auth = auth;}
 
-    /*
-     * GETTER
-     */
     public String get_path_hash() {return this.path_hash;}
 
     public String get_email() {return this.email;}

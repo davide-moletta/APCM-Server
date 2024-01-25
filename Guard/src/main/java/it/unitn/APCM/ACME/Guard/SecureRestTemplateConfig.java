@@ -22,9 +22,11 @@ public class SecureRestTemplateConfig {
 
 	private static SSLContext sslContext = null;
 
+	// RestTemplate implementation that works with mTLS for secure connections
 	public SecureRestTemplateConfig(){
 		if (sslContext == null) {
 			try {
+				// Get the environment variables
 				String kstore_pw = System.getenv("KEYSTORE_PASSWORD");
 				String k_pw = System.getenv("KEY_PASSWORD");
 				if (kstore_pw == null || k_pw == null) {
@@ -73,6 +75,7 @@ public class SecureRestTemplateConfig {
 
 	@Bean
 	public RestTemplate secureRestTemplate() {
+		// Create the secure RestTemplate
 		SSLConnectionSocketFactory sslSocketFactory = SSLConnectionSocketFactoryBuilder.create().setSslContext(sslContext).build();
 		HttpClientConnectionManager cm = PoolingHttpClientConnectionManagerBuilder.create().setSSLSocketFactory(sslSocketFactory).build();
 		HttpClient httpClient = HttpClients.custom().setConnectionManager(cm).evictExpiredConnections().build();
