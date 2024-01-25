@@ -39,17 +39,4 @@ public class JDBC_Connection {
 			log.error(e.getMessage());
 		}
 	}
-
-	/**
-	 * Disconnect from the db_files database
-	 */
-	// private void disconnect() {
-	// 	try {
-	// 		if (conn != null) {
-	// 			conn.close();
-	// 		}
-	// 	} catch (SQLException ex) {
-	// 		log.error(ex.getMessage());
-	// 	}
-	// }
 }

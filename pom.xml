@@ -49,6 +49,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.mitre.secretsharing</groupId>
+            <artifactId>secret-sharing-scheme</artifactId>
+            <version>1.2.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
             <version>3.2.1</version>
