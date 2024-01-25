@@ -21,7 +21,6 @@ public class DB_RESTApp {
 
 	public static void main(String[] args) {
 		SpringApplication app = new SpringApplication(DB_RESTApp.class);
-		//String sss_path = null;
 		ArrayList<String> real_args = new ArrayList<>(1);
 		// Exclude Spring params
 		for (String a : args) {
@@ -46,7 +45,6 @@ public class DB_RESTApp {
 		try {
 			byte[] keyByte = Secrets.join(parts);
 			masterKey =  new SecretKeySpec(keyByte, 0, keyByte.length, "AES");
-			System.out.println(new String(keyByte)); 
 			app.run(args);
 			log.info("DB_RESTApp started");
 		}
