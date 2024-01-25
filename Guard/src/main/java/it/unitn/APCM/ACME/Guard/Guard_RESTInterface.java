@@ -54,9 +54,6 @@ public class Guard_RESTInterface {
 	private static final Logger log = LoggerFactory.getLogger(Guard_RESTInterface.class);
 	private static final String dbServer_url = String.format("https://%s/api/v1/", Guard_RESTApp.srvdb);
 
-	// private static final String fP =
-	// (((newFile(System.getProperty("java.io.tmpdir"),
-	// "ACMEFILES")).toURI()).toString()).substring(6);
 	private static final String fP = URI.create("Guard/src/main/java/it/unitn/APCM/ACME/Guard/Files/").toString();
 
 	// encryption algorithm
@@ -99,11 +96,14 @@ public class Guard_RESTInterface {
 		String files = "";
 
 		HttpHeaders headers = new HttpHeaders();
-		HttpStatus status = HttpStatus.UNAUTHORIZED;
+		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 
 		if (JWT_Utils.validateToken(jwt, email)) {
 			files = fetch_files(URI.create(fP), "");
 			status = HttpStatus.OK;
+		} else {
+			log.error("Unauthorized user");
+			status = HttpStatus.UNAUTHORIZED;
 		}
 
 		return new ResponseEntity<>(files, headers, status);
@@ -194,18 +194,15 @@ public class Guard_RESTInterface {
 		HttpHeaders headers = new HttpHeaders();
 
 		String response = "error";
-		HttpStatus status = HttpStatus.UNAUTHORIZED;
+		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 		if (validPassword) {
-			response = "success";
-			status = HttpStatus.OK;
-
+			
 			UserPrivilege userPrivilege = getUserPrivilege(email);
-
-			User user = new User(email, userPrivilege.getGroups(),
-					userPrivilege.getAdmin());
-
+			User user = new User(email, userPrivilege.getGroups(),userPrivilege.getAdmin());
 			final String jwt = JWT_Utils.generateToken(user);
 
+			response = "success";
+			status = HttpStatus.OK;
 			headers.add("jwt", jwt);
 		}
 
@@ -222,7 +219,7 @@ public class Guard_RESTInterface {
 		log.trace("got a request for file: " + path + " from: " + email);
 
 		HttpHeaders headers = new HttpHeaders();
-		HttpStatus status = HttpStatus.UNAUTHORIZED;
+		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 
 		ClientResponse clientResponse = new ClientResponse(path, false, false, "");
 
@@ -233,7 +230,6 @@ public class Guard_RESTInterface {
 		if (JWT_Utils.validateToken(jwt, email)) {
 
 			UserPrivilege user = new UserPrivilege(JWT_Utils.extractAdmin(jwt), JWT_Utils.extractGroups(jwt));
-
 			String completePath = URI.create(fP + path).toString();
 
 			InputStream inputStream = new FileInputStream(completePath);
@@ -265,7 +261,6 @@ public class Guard_RESTInterface {
 
 			// sends the request and capture the response
 			RestTemplate srt = secureRestTemplate;
-			status = HttpStatus.OK;
 
 			try {
 
@@ -287,14 +282,18 @@ public class Guard_RESTInterface {
 						} else {
 							clientResponse.set_text("");
 						}
+
+						status = HttpStatus.OK;
 					}
 				}
 			} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
-				status = HttpStatus.INTERNAL_SERVER_ERROR;
 				clientResponse = null;
 				log.error("Error in the response from DB server");
-				System.out.println(e);
 			}
+		} else {
+			log.error("Unauthorized user");
+			status = HttpStatus.UNAUTHORIZED;
+			clientResponse = null;
 		}
 
 		return new ResponseEntity<>(clientResponse, headers, status);
@@ -312,7 +311,7 @@ public class Guard_RESTInterface {
 
 		String response = "error";
 		HttpHeaders headers = new HttpHeaders();
-		HttpStatus status = HttpStatus.UNAUTHORIZED;
+		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 
 		if (!securePath(fP, path)) {
 			return new ResponseEntity<>(response, headers, status);
@@ -331,8 +330,6 @@ public class Guard_RESTInterface {
 					"&admin=" + user.getAdmin();
 
 			log.trace("Requesting for: " + DB_request_url);
-
-			status = HttpStatus.INTERNAL_SERVER_ERROR;
 
 			// sends the request and capture the response
 			RestTemplate srt = secureRestTemplate;
@@ -371,6 +368,9 @@ public class Guard_RESTInterface {
 			} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
 				log.error("Error in the response from DB server");
 			}
+		} else {
+			log.error("Unauthorized user");
+			status = HttpStatus.UNAUTHORIZED;
 		}
 
 		return new ResponseEntity<>(response, headers, status);
@@ -434,6 +434,9 @@ public class Guard_RESTInterface {
 			} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
 				log.error("Error in the response from DB server");
 			}
+		} else{
+			log.error("Unauthorized user");
+			status = HttpStatus.UNAUTHORIZED;
 		}
 
 		return new ResponseEntity<>(response, headers, status);
