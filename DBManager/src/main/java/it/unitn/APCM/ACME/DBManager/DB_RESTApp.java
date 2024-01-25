@@ -4,12 +4,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import it.unitn.APCM.ACME.DBManager.SSS.Shamir;
 
-import java.io.IOException;
 import java.util.*;
 
+import org.mitre.secretsharing.Part;
+import org.mitre.secretsharing.Secrets;
+import org.mitre.secretsharing.codec.PartFormats;
+
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 @SpringBootApplication
 public class DB_RESTApp {
@@ -18,7 +21,7 @@ public class DB_RESTApp {
 
 	public static void main(String[] args) {
 		SpringApplication app = new SpringApplication(DB_RESTApp.class);
-		String sss_path = null;
+		//String sss_path = null;
 		ArrayList<String> real_args = new ArrayList<>(1);
 		// Exclude Spring params
 		for (String a : args) {
@@ -26,25 +29,28 @@ public class DB_RESTApp {
 				real_args.add(a);
 			}
 		}
-		switch (real_args.size()) {
-			case 0:
-				// Use default values
-				break;
-			case 1:
-				// parameter that we want
-				sss_path = real_args.get(0);
-				break;
-			default:
-				log.error("Error in parameters number, some parameter are not parsed");
-				throw new IllegalArgumentException("At most 1 parameter could be passed");
+
+		Part[] parts = null;
+
+		if(real_args.size() < 3){
+			log.error("At least 3 keys are required");
+			throw new IllegalArgumentException("At least 3 keys are required");
+		} else {
+			parts = new Part[real_args.size()];
+
+			for(int i = 0; i < real_args.size(); i++){
+				parts[i] = PartFormats.parse(real_args.get(i));
+			}
 		}
-		Shamir sh = new Shamir();
+
 		try {
-			masterKey = sh.getMasterSecret(sss_path);
+			byte[] keyByte = Secrets.join(parts);
+			masterKey =  new SecretKeySpec(keyByte, 0, keyByte.length, "AES");
+			System.out.println(new String(keyByte)); 
 			app.run(args);
 			log.info("DB_RESTApp started");
 		}
-		catch (IOException | NullPointerException e) {
+		catch (NullPointerException e) {
 			log.error(e.toString());
 		}
 	}
