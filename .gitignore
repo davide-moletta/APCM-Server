@@ -40,3 +40,4 @@ target/
 *.jks
 
 SSS.txt
+**/Files/
