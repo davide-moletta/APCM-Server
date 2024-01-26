@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -607,7 +608,7 @@ public class Guard_RESTInterface {
 	 * @return the response entity
 	 * @throws IOException the io exception
 	 */
-	@GetMapping(value = "/delete")
+	@DeleteMapping(value = "/delete")
 	public ResponseEntity<String> delete_file(@RequestParam String email,
 			@RequestParam String path, @RequestHeader String jwt) throws IOException {
 
