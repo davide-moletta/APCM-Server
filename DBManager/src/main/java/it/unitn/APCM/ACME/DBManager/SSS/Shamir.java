@@ -12,12 +12,25 @@ import org.mitre.secretsharing.codec.PartFormats;
 
 import it.unitn.APCM.ACME.ServerCommon.CryptographyPrimitive;
 
+/**
+ * The type Shamir.
+ */
 public class Shamir {
+    /**
+     * The entry point of application.
+     *
+     * @param args the input arguments
+     */
     public static void main(String[] args) {
         generateShamir();
         generateEffectiveKey(args);
-    } 
+    }
 
+    /**
+     * Generate effective key.
+     *
+     * @param args the args
+     */
     private static void generateEffectiveKey(String[] args){
         Part[] parts = new Part[args.length];
 
@@ -32,6 +45,9 @@ public class Shamir {
         (new CryptographyPrimitive()).encrypt(effectiveKey.getEncoded(), masterKey);
     }
 
+    /**
+     * Generate shamir.
+     */
     private static void generateShamir(){
         SecretKey cipherKey = (new CryptographyPrimitive()).getSymmetricKey();
         

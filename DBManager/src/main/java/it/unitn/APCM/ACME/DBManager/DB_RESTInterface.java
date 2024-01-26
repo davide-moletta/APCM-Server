@@ -20,16 +20,32 @@ import java.util.Arrays;
 
 import javax.crypto.SecretKey;
 
+/**
+ * The type Db rest interface.
+ */
 @RestController
 @RequestMapping("/api/v1")
 public class DB_RESTInterface {
-	// Connection statically instantiated
+	/**
+	 * The constant conn.
+	 */
+// Connection statically instantiated
 	private final Connection conn = DB_Connection.getDbconn();
-	// Logger
+	/**
+	 * The constant log.
+	 */
+// Logger
 	private static final Logger log = LoggerFactory.getLogger(DB_RESTInterface.class);
 
 	/**
 	 * Endpoint for getting the password of the specified file if authorized
+	 *
+	 * @param path_hash  the path hash
+	 * @param file_hash  the file hash
+	 * @param email      the email
+	 * @param user_group the user group
+	 * @param admin      the admin
+	 * @return the key
 	 */
 	@GetMapping("/decryption_key")
 	public ResponseEntity<Response> get_key(@RequestParam(value = "path_hash") String path_hash,
@@ -117,6 +133,13 @@ public class DB_RESTInterface {
 
 	/**
 	 * Endpoint for getting the password of the specified file if authorized
+	 *
+	 * @param path_hash the path hash
+	 * @param path      the path
+	 * @param email     the email
+	 * @param r_groups  the r groups
+	 * @param rw_groups the rw groups
+	 * @return the response entity
 	 */
 	@PostMapping("/newFile")
 	public ResponseEntity<String> new_File(@RequestParam(value = "path_hash") String path_hash,
@@ -192,6 +215,10 @@ public class DB_RESTInterface {
 
 	/**
 	 * Endpoint to save new file Hash
+	 *
+	 * @param path_hash the path hash
+	 * @param file_hash the file hash
+	 * @return the response entity
 	 */
 	@PostMapping("/saveFile")
 	public ResponseEntity<String> save_File(@RequestParam(value = "path_hash") String path_hash,
@@ -227,6 +254,9 @@ public class DB_RESTInterface {
 
 	/**
 	 * Endpoint to delete a file
+	 *
+	 * @param path_hash the path hash
+	 * @return the response entity
 	 */
 	@DeleteMapping("/deleteFile")
 	public ResponseEntity<String> delete_File(@RequestParam(value = "path_hash") String path_hash) {

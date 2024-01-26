@@ -14,14 +14,35 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 
+/**
+ * The type Cryptography primitive.
+ */
 public class CryptographyPrimitive {
 
+    /**
+     * The Algorithm.
+     */
     static final String algorithm = "AES";
+    /**
+     * The Transformation.
+     */
     static final String transformation = "AES/GCM/NoPadding";
+    /**
+     * The Key byte len.
+     */
     static final int keyByteLen = 32;
+    /**
+     * The Ivlen.
+     */
     static final int IVLEN = 12;
 
-    // Function that returns the hash of a byte array
+    /**
+     * Gets hash.
+     *
+     * @param hash the hash
+     * @return the hash
+     */
+// Function that returns the hash of a byte array
     public String getHash(byte[] hash) {
         try {
             // Instantiate the SHA-512
@@ -38,7 +59,12 @@ public class CryptographyPrimitive {
         }
     }
 
-    // Function to generate a random symmetric key
+    /**
+     * Gets symmetric key.
+     *
+     * @return the symmetric key
+     */
+// Function to generate a random symmetric key
     public SecretKey getSymmetricKey() {
         SecretKey cipherKey = null;
 
@@ -57,7 +83,14 @@ public class CryptographyPrimitive {
         return cipherKey;
     }
 
-    // Function to encrypt a byte array with a symmetric key
+    /**
+     * Encrypt byte [ ].
+     *
+     * @param textToEnc the text to enc
+     * @param key       the key
+     * @return the byte [ ]
+     */
+// Function to encrypt a byte array with a symmetric key
     public byte[] encrypt(byte[] textToEnc, SecretKey key) {
         // check that there is some data to encrypt
         if (textToEnc.length == 0) {
@@ -91,7 +124,14 @@ public class CryptographyPrimitive {
         }
     }
 
-    // Function to decrypt a byte array with a symmetric key
+    /**
+     * Decrypt byte [ ].
+     *
+     * @param encText the enc text
+     * @param key     the key
+     * @return the byte [ ]
+     */
+// Function to decrypt a byte array with a symmetric key
     public byte[] decrypt(byte[] encText, SecretKey key) {
         // check that there is some data to decrypt
         if (encText.length == 0) {

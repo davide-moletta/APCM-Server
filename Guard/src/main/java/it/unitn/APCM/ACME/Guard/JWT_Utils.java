@@ -17,45 +17,95 @@ import io.jsonwebtoken.Jwts;
 
 import javax.crypto.SecretKey;
 
+/**
+ * The type Jwt utils.
+ */
 @Service
 public class JWT_Utils {
-	// Logger
+    /**
+     * The constant log.
+     */
+// Logger
 	private static final Logger log = LoggerFactory.getLogger(Guard_RESTInterface.class);
-    // Secret key to encrypt and decrypt the token
+    /**
+     * The constant SECRET_KEY.
+     */
+// Secret key to encrypt and decrypt the token
     private static final SecretKey SECRET_KEY = Keys
             .hmacShaKeyFor((new CryptographyPrimitive().getSymmetricKey()).getEncoded());
-    // Token expiration time => mills * seconds * minutes * hours
-    private static int EXP_TIME = 1000 * 60 * 30 * 1;
+    /**
+     * The constant EXP_TIME.
+     */
+// Token expiration time => mills * seconds * minutes * hours
+    private static final int EXP_TIME = 1000 * 60 * 30 * 1;
 
-    // Extract the username from the token
+    /**
+     * Extract username string.
+     *
+     * @param token the token
+     * @return the string
+     */
+// Extract the username from the token
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // Extract the expiration date from the token
+    /**
+     * Extract date date.
+     *
+     * @param token the token
+     * @return the date
+     */
+// Extract the expiration date from the token
     public Date extractDate(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    // Extract the claims from the token
+    /**
+     * Extract claim t.
+     *
+     * @param <T>            the type parameter
+     * @param token          the token
+     * @param claimsResolver the claims resolver
+     * @return the t
+     */
+// Extract the claims from the token
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    // Extract the groups from the token
+    /**
+     * Extract groups string.
+     *
+     * @param token the token
+     * @return the string
+     */
+// Extract the groups from the token
     public String extractGroups(String token) {
         final Claims claims = extractAllClaims(token);
         return (String) claims.get("groups");
     }
 
-    // Extract the admin from the token
+    /**
+     * Extract admin int.
+     *
+     * @param token the token
+     * @return the int
+     */
+// Extract the admin from the token
     public int extractAdmin(String token) {
         final Claims claims = extractAllClaims(token);
         return (int) claims.get("admin");
     }
 
-    // Extract all the claims from the token
+    /**
+     * Extract all claims claims.
+     *
+     * @param token the token
+     * @return the claims
+     */
+// Extract all the claims from the token
     private Claims extractAllClaims(String token) {
         return Jwts.parser().verifyWith(SECRET_KEY)
                 .build()
@@ -63,11 +113,23 @@ public class JWT_Utils {
                 .getPayload();
     }
 
+    /**
+     * Is token expired boolean.
+     *
+     * @param token the token
+     * @return the boolean
+     */
     private Boolean isTokenExpired(String token) {
         return extractDate(token).before(new Date());
     }
 
-    // Generate the token
+    /**
+     * Generate token string.
+     *
+     * @param userDetails the user details
+     * @return the string
+     */
+// Generate the token
     public String generateToken(User userDetails) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("groups", userDetails.getGroups());
@@ -75,7 +137,14 @@ public class JWT_Utils {
         return createToken(claims, userDetails.getEmail());
     }
 
-    // Create the token
+    /**
+     * Create token string.
+     *
+     * @param claims  the claims
+     * @param subject the subject
+     * @return the string
+     */
+// Create the token
     private String createToken(Map<String, Object> claims, String subject) {
         long start_time = System.currentTimeMillis();
         return Jwts.builder().claims(claims).subject(subject).issuedAt(new Date(start_time))
@@ -83,7 +152,14 @@ public class JWT_Utils {
                 .signWith(SECRET_KEY).compact();
     }
 
-    // Validate the token
+    /**
+     * Validate token boolean.
+     *
+     * @param token the token
+     * @param email the email
+     * @return the boolean
+     */
+// Validate the token
     public Boolean validateToken(String token, String email) {
         boolean res = false;
         try{

@@ -51,26 +51,56 @@ import java.util.ArrayList;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+/**
+ * The type Guard rest interface.
+ */
 @RestController
 @RequestMapping("/api/v1")
 public class Guard_RESTInterface {
-	// Connection statically instantiated
+	/**
+	 * The constant conn.
+	 */
+// Connection statically instantiated
 	private final Connection conn = Guard_Connection.getDbconn();
-	// Logger
+	/**
+	 * The constant log.
+	 */
+// Logger
 	private static final Logger log = LoggerFactory.getLogger(Guard_RESTInterface.class);
-	// DB server url
+	/**
+	 * The constant dbServer_url.
+	 */
+// DB server url
 	private static final String dbServer_url = String.format("https://%s/api/v1/", Guard_RESTApp.srvdb);
-	// Files path
+	/**
+	 * The constant fP.
+	 */
+// Files path
 	private static final String fP = URI.create("Guard/src/main/java/it/unitn/APCM/ACME/Guard/Files/").toString();
-	// encryption algorithm
+	/**
+	 * The constant algorithm.
+	 */
+// encryption algorithm
 	static final String algorithm = "AES";
 
+	/**
+	 * The Secure rest template.
+	 */
 	@Autowired
 	private RestTemplate secureRestTemplate;
 
+	/**
+	 * The Jwt utils.
+	 */
 	@Autowired
 	private JWT_Utils JWT_Utils;
 
+	/**
+	 * Fetch files array list.
+	 *
+	 * @param path the path
+	 * @return the array list
+	 */
 	private ArrayList<String> fetch_files(URI path) {
 		// Get the path of the directory
 		File directoryPath = new File(path.getPath());
@@ -103,6 +133,10 @@ public class Guard_RESTInterface {
 
 	/**
 	 * Endpoint to retrieve the available files
+	 *
+	 * @param email the email
+	 * @param jwt   the jwt
+	 * @return the files
 	 */
 	@GetMapping("/files")
 	public ResponseEntity<String> get_files(@RequestParam String email, @RequestHeader String jwt) {
@@ -143,6 +177,12 @@ public class Guard_RESTInterface {
 
 	/**
 	 * Endpoint to create a new user
+	 *
+	 * @param email    the email
+	 * @param password the password
+	 * @param groups   the groups
+	 * @param admin    the admin
+	 * @return the response entity
 	 */
 	@GetMapping("/newUser")
 	public ResponseEntity<String> createUser(@RequestParam String email, @RequestParam String password,
@@ -184,6 +224,9 @@ public class Guard_RESTInterface {
 
 	/**
 	 * Endpoint to login
+	 *
+	 * @param credentials the credentials
+	 * @return the response entity
 	 */
 	@PostMapping("/login")
 	public ResponseEntity<String> login(@RequestBody String credentials) {
@@ -258,6 +301,12 @@ public class Guard_RESTInterface {
 
 	/**
 	 * Endpoint to retrieve a file
+	 *
+	 * @param email the email
+	 * @param path  the path
+	 * @param jwt   the jwt
+	 * @return the file
+	 * @throws IOException the io exception
 	 */
 	@GetMapping(value = "/file")
 	public ResponseEntity<ClientResponse> get_file(@RequestParam String email,
@@ -355,6 +404,13 @@ public class Guard_RESTInterface {
 
 	/**
 	 * Endpoint to save a file
+	 *
+	 * @param email         the email
+	 * @param path          the path
+	 * @param newTextToSave the new text to save
+	 * @param jwt           the jwt
+	 * @return the response entity
+	 * @throws IOException the io exception
 	 */
 	@PostMapping(value = "/file")
 	public ResponseEntity<String> save_file(@RequestParam String email,
@@ -445,6 +501,14 @@ public class Guard_RESTInterface {
 
 	/**
 	 * Endpoint to create a new file
+	 *
+	 * @param email     the email
+	 * @param path      the path
+	 * @param r_groups  the r groups
+	 * @param rw_groups the rw groups
+	 * @param jwt       the jwt
+	 * @return the response entity
+	 * @throws Exception the exception
 	 */
 	@GetMapping(value = "/newFile")
 	public ResponseEntity<String> new_file(@RequestParam String email,
@@ -502,7 +566,7 @@ public class Guard_RESTInterface {
 						response = "success";
 						status = HttpStatus.CREATED;
 					} else {
-						throw new ResourceAccessException("File already esisting: " + realpath + "" + splittedPath[indexName]);
+						throw new ResourceAccessException("File already esisting: " + realpath + splittedPath[indexName]);
 					}
 				}
 			} catch (HttpClientErrorException | HttpServerErrorException e) {
@@ -537,7 +601,13 @@ public class Guard_RESTInterface {
 		return new ResponseEntity<>(response, headers, status);
 	}
 
-	// Function to retrieve the user privilege from the DB
+	/**
+	 * Gets user privilege.
+	 *
+	 * @param email the email
+	 * @return the user privilege
+	 */
+// Function to retrieve the user privilege from the DB
 	private UserPrivilege getUserPrivilege(String email) {
 		ArrayList<String> groups = null;
 		int admin = -1;
@@ -572,7 +642,14 @@ public class Guard_RESTInterface {
 		return new UserPrivilege(admin, groupsToString);
 	}
 
-	// Function to check for path traversal attempts
+	/**
+	 * Secure path boolean.
+	 *
+	 * @param basePath the base path
+	 * @param userPath the user path
+	 * @return the boolean
+	 */
+// Function to check for path traversal attempts
 	private boolean securePath(String basePath, String userPath) {
 		// Get the path of the directory
 		Path path = Paths.get(basePath).normalize();

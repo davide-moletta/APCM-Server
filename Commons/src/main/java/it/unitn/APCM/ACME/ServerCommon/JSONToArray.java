@@ -6,8 +6,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 
+/**
+ * The type Json to array.
+ */
 public class JSONToArray extends ArrayList<String> {
 
+	/**
+	 * Instantiates a new Json to array.
+	 *
+	 * @param str the str
+	 * @throws JsonProcessingException the json processing exception
+	 */
 	public JSONToArray(String str) throws JsonProcessingException {
 		if (str != null) {
 			ObjectMapper objectMapper = new ObjectMapper();

@@ -7,12 +7,26 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.util.ArrayList;
 
+/**
+ * The type Guard rest app.
+ */
 @SpringBootApplication
 public class Guard_RESTApp {
+	/**
+	 * The constant log.
+	 */
 	private static final Logger log = LoggerFactory.getLogger(Guard_RESTApp.class);
 
+	/**
+	 * The Srvdb.
+	 */
 	static public String srvdb = null;
 
+	/**
+	 * The entry point of application.
+	 *
+	 * @param args the input arguments
+	 */
 	public static void main(String[] args) {
 		SpringApplication app = new SpringApplication(Guard_RESTApp.class);
 

@@ -9,22 +9,40 @@ import java.sql.*;
  * Class to connect the DB side of the project
  */
 public class JDBC_Connection {
-	// Define a logger for the class
+	/**
+	 * The constant log.
+	 */
+// Define a logger for the class
 	private static final Logger log = LoggerFactory.getLogger(JDBC_Connection.class);
 
-	// Define Connection to DB
+	/**
+	 * The Conn.
+	 */
+// Define Connection to DB
 	private Connection conn = null;
 
+	/**
+	 * Instantiates a new Jdbc connection.
+	 *
+	 * @param file the file
+	 */
 	public JDBC_Connection(String file) {
 		connect(file);
 	}
 
+	/**
+	 * Gets conn.
+	 *
+	 * @return the conn
+	 */
 	public Connection getConn() {
 		return conn;
 	}
 
 	/**
 	 * Connect to the db_files database
+	 *
+	 * @param file the file
 	 */
 	private void connect(String file) {
 		try {

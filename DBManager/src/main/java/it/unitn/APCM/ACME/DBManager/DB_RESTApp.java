@@ -16,11 +16,25 @@ import org.mitre.secretsharing.codec.PartFormats;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+/**
+ * The type Db rest app.
+ */
 @SpringBootApplication
 public class DB_RESTApp {
+	/**
+	 * The constant log.
+	 */
 	private static final Logger log = LoggerFactory.getLogger(DB_RESTApp.class);
+	/**
+	 * The constant masterKey.
+	 */
 	protected static SecretKey masterKey;
 
+	/**
+	 * The entry point of application.
+	 *
+	 * @param args the input arguments
+	 */
 	public static void main(String[] args) {
 		SpringApplication app = new SpringApplication(DB_RESTApp.class);
 		ArrayList<String> real_args = new ArrayList<>(1);

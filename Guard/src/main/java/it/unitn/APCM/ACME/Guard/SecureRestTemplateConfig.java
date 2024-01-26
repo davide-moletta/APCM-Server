@@ -17,12 +17,21 @@ import java.io.InputStream;
 import java.security.*;
 import java.security.cert.CertificateException;
 
+/**
+ * The type Secure rest template config.
+ */
 @Component
 public class SecureRestTemplateConfig {
 
+	/**
+	 * The constant sslContext.
+	 */
 	private static SSLContext sslContext = null;
 
-	// RestTemplate implementation that works with mTLS for secure connections
+	/**
+	 * Instantiates a new Secure rest template config.
+	 */
+// RestTemplate implementation that works with mTLS for secure connections
 	public SecureRestTemplateConfig(){
 		if (sslContext == null) {
 			try {
@@ -73,6 +82,11 @@ public class SecureRestTemplateConfig {
 		}
 	}
 
+	/**
+	 * Secure rest template rest template.
+	 *
+	 * @return the rest template
+	 */
 	@Bean
 	public RestTemplate secureRestTemplate() {
 		// Create the secure RestTemplate
