@@ -25,11 +25,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import it.unitn.APCM.ACME.ServerCommon.ClientResponse;
+import it.unitn.APCM.ACME.Guard.Objects.ClientResponse;
+import it.unitn.APCM.ACME.Guard.Objects.JWT_Utils;
+import it.unitn.APCM.ACME.Guard.Objects.User;
+import it.unitn.APCM.ACME.Guard.Objects.UserPrivilege;
 import it.unitn.APCM.ACME.ServerCommon.CryptographyPrimitive;
 import it.unitn.APCM.ACME.ServerCommon.JSONToArray;
 import it.unitn.APCM.ACME.ServerCommon.Response;
-import it.unitn.APCM.ACME.ServerCommon.UserPrivilege;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -396,10 +398,10 @@ public class Guard_RESTInterface {
 	/**
 	 * Endpoint to save a file
 	 *
-	 * @param email         the email
-	 * @param path          the path
-	 * @param newTextToSave the new text to save
-	 * @param jwt           the jwt
+	 * @param email         the email of the user requesting to save the file
+	 * @param path          the path of the file
+	 * @param newTextToSave the new text to save 
+	 * @param jwt           the jwt token of the user
 	 * @return the response entity
 	 * @throws IOException the io exception
 	 */
@@ -463,8 +465,7 @@ public class Guard_RESTInterface {
 						String DB_request2_url = dbServer_url + "saveFile?" +
 								"path_hash="
 								+ (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8))
-								+
-								"&file_hash=" + (new CryptographyPrimitive()).getHash(textEnc);
+								+ "&file_hash=" + (new CryptographyPrimitive()).getHash(textEnc);
 
 						log.trace("Requesting for: " + DB_request2_url);
 

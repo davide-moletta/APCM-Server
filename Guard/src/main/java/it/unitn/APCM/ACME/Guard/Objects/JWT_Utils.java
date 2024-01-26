@@ -1,4 +1,4 @@
-package it.unitn.APCM.ACME.Guard;
+package it.unitn.APCM.ACME.Guard.Objects;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import io.jsonwebtoken.security.Keys;
+import it.unitn.APCM.ACME.Guard.Guard_RESTInterface;
 import it.unitn.APCM.ACME.ServerCommon.CryptographyPrimitive;
 
 import org.slf4j.Logger;

@@ -1,4 +1,4 @@
-package it.unitn.APCM.ACME.Guard;
+package it.unitn.APCM.ACME.Guard.Objects;
 
 /**
  * The type User.
