@@ -325,14 +325,16 @@ public class Guard_RESTInterface {
 			UserPrivilege user = new UserPrivilege(JWT_Utils.extractAdmin(jwt), JWT_Utils.extractGroups(jwt));
 			String completePath = URI.create(fP + path).toString();
 
-			InputStream inputStream = new FileInputStream(completePath);
-			// set up buffer
-			long fileSize = new File(completePath).length();
+			long fileSize;
 			byte[] allBytes = null;
-			if ((int) fileSize != 0) {
-				allBytes = new byte[(int) fileSize];
-				// read from file and return result
-				inputStream.read(allBytes);
+			try (InputStream inputStream = new FileInputStream(completePath)) {
+				// set up buffer
+				fileSize = new File(completePath).length();
+				if ((int) fileSize != 0) {
+					allBytes = new byte[(int) fileSize];
+					// read from file and return result
+					inputStream.read(allBytes);
+				}
 				inputStream.close();
 			}
 
@@ -400,7 +402,7 @@ public class Guard_RESTInterface {
 	 *
 	 * @param email         the email of the user requesting to save the file
 	 * @param path          the path of the file
-	 * @param newTextToSave the new text to save 
+	 * @param newTextToSave the new text to save
 	 * @param jwt           the jwt token of the user
 	 * @return the response entity
 	 * @throws IOException the io exception
@@ -456,10 +458,11 @@ public class Guard_RESTInterface {
 
 						// Save encrypted file
 						String completePath = URI.create(fP + path).toString();
-						OutputStream outputStream = new FileOutputStream(completePath);
-						outputStream.write(textEnc, 0, textEnc.length);
-						outputStream.flush();
-						outputStream.close();
+						try (OutputStream outputStream = new FileOutputStream(completePath)) {
+							outputStream.write(textEnc, 0, textEnc.length);
+							outputStream.flush();
+							outputStream.close();
+						}
 
 						// Craft the request to the DB interface
 						String DB_request2_url = dbServer_url + "saveFile?" +
@@ -557,6 +560,7 @@ public class Guard_RESTInterface {
 						// Set the response header and status
 						response = "success";
 						status = HttpStatus.CREATED;
+
 					} else {
 						throw new ResourceAccessException(
 								"File already esisting: " + realpath + splittedPath[indexName]);
@@ -571,7 +575,7 @@ public class Guard_RESTInterface {
 						"path_hash=" + (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8));
 
 				try {
-					log.trace(DB_delete_url);
+					log.trace("Requesting for: " + DB_delete_url);
 					ResponseEntity<String> ent = srt.exchange(DB_delete_url, HttpMethod.DELETE, null, String.class);
 
 					HttpStatusCode res = ent.getStatusCode();
@@ -583,6 +587,149 @@ public class Guard_RESTInterface {
 					}
 				} catch (HttpClientErrorException | HttpServerErrorException ex) {
 					log.error("Impossible to delete" + ex.getMessage());
+				}
+			}
+		} else {
+			// Token is not valid, return unauthorized
+			log.error("Unauthorized user");
+			status = HttpStatus.UNAUTHORIZED;
+		}
+
+		return new ResponseEntity<>(response, headers, status);
+	}
+
+	/**
+	 * Endpoint to delete a file
+	 *
+	 * @param email the email of the user requesting to delete the file
+	 * @param path  the path of the file
+	 * @param jwt   the jwt token of the user
+	 * @return the response entity
+	 * @throws IOException the io exception
+	 */
+	@GetMapping(value = "/delete")
+	public ResponseEntity<String> delete_file(@RequestParam String email,
+			@RequestParam String path, @RequestHeader String jwt) throws IOException {
+
+		log.trace("Request to delete file: " + path + " from: " + email);
+
+		// Set up the response header and status
+		HttpHeaders headers = new HttpHeaders();
+		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+		String response = "error";
+
+		// Check for path traversal attempts
+		if (!securePath(fP, path)) {
+			return new ResponseEntity<>(response, headers, status);
+		}
+
+		// Validate the JWT token
+		if (JWT_Utils.validateToken(jwt, email)) {
+
+			// Get the user privilege
+			UserPrivilege user = new UserPrivilege(JWT_Utils.extractAdmin(jwt), JWT_Utils.extractGroups(jwt));
+
+			// Craft the request to the DB interface
+			String DB_request_url = dbServer_url + "decryption_key?" +
+					"path_hash=" + (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8)) +
+					"&file_hash=" +
+					"&email=" + email +
+					"&user_groups=" + user.getGroups() +
+					"&admin=" + user.getAdmin();
+
+			log.trace("Requesting for: " + DB_request_url);
+
+			// sends the request and capture the response
+			RestTemplate srt = secureRestTemplate;
+			Response res = null;
+			try {
+				// get the response and decide accordingly
+				res = srt.getForEntity(DB_request_url, Response.class).getBody();
+			} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
+				log.error("Error in the response from DB server");
+			}
+
+			if (res != null) {
+				// Check if the user is authorized to write the file
+				if (res.get_w_mode()) {
+
+					String completePath = URI.create(fP + path).toString();
+
+					byte[] allBytes = null;
+					// Save the content of the file for eventual restore
+					try (InputStream inputStream = new FileInputStream(completePath)) {
+						// set up buffer
+						long fileSize = new File(completePath).length();
+						if ((int) fileSize != 0) {
+							allBytes = new byte[(int) fileSize];
+							// read from file and return result
+							inputStream.read(allBytes);
+						}
+						inputStream.close();
+					}
+
+					boolean file_deleted = false;
+					boolean file_deleted_DB = false;
+
+					// get the path of the file
+					String[] splittedPath = path.split("/");
+					int indexName = splittedPath.length - 1;
+					String dirPath = "";
+					for (int i = 0; i < indexName; i++) {
+						dirPath += "/" + splittedPath[i];
+					}
+					String realpath = URI.create(fP + dirPath).getPath();
+
+					// Try to delete the file
+					File file = new File(realpath, splittedPath[indexName]);
+
+					if (file.delete()) {
+						file_deleted = true;
+					}
+
+					// Check if the file is deleted
+					if (file_deleted) {
+						log.trace("File: " + path + " deleted");
+						// File deleted, request the db to remove the entry
+						String DB_delete_url = dbServer_url + "deleteFile?" +
+								"path_hash="
+								+ (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8));
+
+						// Request the db to delete the file
+						try {
+							log.trace("Requesting for: " + DB_delete_url);
+							ResponseEntity<String> ent = srt.exchange(DB_delete_url, HttpMethod.DELETE, null,
+									String.class);
+
+							// Check the db response
+							HttpStatusCode code = ent.getStatusCode();
+							if (code == HttpStatus.OK) {
+								// If ok set the response and inform the client that the file has been deleted
+								// successfully
+								log.trace("File deleted successfully");
+								response = "success";
+								status = HttpStatus.OK;
+								file_deleted_DB = true;
+							} else {
+								log.error("Impossible to delete");
+							}
+						} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException ex) {
+							log.error("Impossible to delete" + ex.getMessage());
+						}
+					}
+
+					// Check if file is deleted only on the guard and not in the db
+					if (file_deleted && !file_deleted_DB) {
+						// If so, restore file and abort operation
+						File f = new File(completePath);
+						if (f.createNewFile()) {
+							try (OutputStream outputStream = new FileOutputStream(completePath)) {
+								outputStream.write(allBytes, 0, allBytes.length);
+								outputStream.flush();
+								outputStream.close();
+							}
+						}
+					}
 				}
 			}
 		} else {
