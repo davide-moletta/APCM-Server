@@ -58,29 +58,24 @@ import javax.crypto.spec.SecretKeySpec;
 @RequestMapping("/api/v1")
 public class Guard_RESTInterface {
 	/**
-	 * The constant conn.
+	 * The constant connection.
 	 */
-	// Connection statically instantiated
 	private final Connection conn = Guard_Connection.getDbconn();
 	/**
-	 * The constant log.
+	 * The constant logger.
 	 */
-	// Logger
 	private static final Logger log = LoggerFactory.getLogger(Guard_RESTInterface.class);
 	/**
 	 * The constant dbServer_url.
 	 */
-	// DB server url
 	private static final String dbServer_url = String.format("https://%s/api/v1/", Guard_RESTApp.srvdb);
 	/**
-	 * The constant fP.
+	 * The constant File path.
 	 */
-	// Files path
 	private static final String fP = URI.create("Guard/src/main/java/it/unitn/APCM/ACME/Guard/Files/").toString();
 	/**
-	 * The constant algorithm.
+	 * The constant encryption algorithm.
 	 */
-	// encryption algorithm
 	static final String algorithm = "AES";
 
 	/**
@@ -96,7 +91,7 @@ public class Guard_RESTInterface {
 	private JWT_Utils JWT_Utils;
 
 	/**
-	 * Fetch files array list.
+	 * Recursive fetch files array list.
 	 *
 	 * @param path the path
 	 * @return the array list
@@ -115,14 +110,14 @@ public class Guard_RESTInterface {
 			for (File content : contents) {
 				// Check if the content is a file or a directory
 				if (content.isFile()) {
-					// is a file
+					// is a file so add it to the array list
 					String file = path.getPath() + content.getName();
 					files_list.add(file.replace(fP, ""));
 				} else if (content.isDirectory()) {
-					// is a directory
+					// is a directory so call the function recursively
 					files_list.addAll(fetch_files(URI.create(path.getPath() + content.getName() + "/")));
 				} else {
-					// is not a file or a directory, return null
+					// is neither a file nor a directory, return null
 					return null;
 				}
 			}
@@ -134,8 +129,8 @@ public class Guard_RESTInterface {
 	/**
 	 * Endpoint to retrieve the available files
 	 *
-	 * @param email the email
-	 * @param jwt   the jwt
+	 * @param email the email of the user
+	 * @param jwt   the jwt token of the user
 	 * @return the files
 	 */
 	@GetMapping("/files")
@@ -225,19 +220,18 @@ public class Guard_RESTInterface {
 	/**
 	 * Endpoint to login
 	 *
-	 * @param credentials the credentials
+	 * @param credentials the credentials of the user as JSON
 	 * @return the response entity
 	 */
 	@PostMapping("/login")
 	public ResponseEntity<String> login(@RequestBody String credentials) {
-		String email = null, password = null;
-		ObjectMapper objectMapper = new ObjectMapper();
-
 		// Set up the response header and status
 		HttpHeaders headers = new HttpHeaders();
 		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 		String response = "error";
 
+		String email = null, password = null;
+		ObjectMapper objectMapper = new ObjectMapper();
 		// Try to parse the JSON object from the request body
 		try {
 			JsonNode jsonNode = objectMapper.readTree(credentials);
@@ -271,16 +265,12 @@ public class Guard_RESTInterface {
 			throw new RuntimeException(e);
 		}
 
-		boolean validPassword = false;
+		assert stored_password != null;
 		// Check if the password is valid with argon2
-		if (stored_password != null) {
-			Argon2PasswordEncoder encoder = new Argon2PasswordEncoder(32, 64, 1, 32 * 1024, 2);
-			validPassword = encoder.matches(password, stored_password);
-		}
+		Argon2PasswordEncoder encoder = new Argon2PasswordEncoder(32, 64, 1, 32 * 1024, 2);
 
-		// Check if the password is valid
-		if (validPassword) {
-
+		if (encoder.matches(password, stored_password)) {
+			// Password is valid, create the JWT token
 			// Get the user privilege
 			UserPrivilege userPrivilege = getUserPrivilege(email);
 			User user = new User(email, userPrivilege.getGroups(), userPrivilege.getAdmin());
@@ -292,6 +282,7 @@ public class Guard_RESTInterface {
 			status = HttpStatus.OK;
 			headers.add("jwt", jwt);
 		} else {
+			// Password is not valid, return unauthorized
 			response = "error";
 			status = HttpStatus.UNAUTHORIZED;
 		}
@@ -302,9 +293,9 @@ public class Guard_RESTInterface {
 	/**
 	 * Endpoint to retrieve a file
 	 *
-	 * @param email the email
-	 * @param path  the path
-	 * @param jwt   the jwt
+	 * @param email the email of the user requesting the file
+	 * @param path  the path of the file
+	 * @param jwt   the jwt token of the user
 	 * @return the file
 	 * @throws IOException the io exception
 	 */
@@ -502,11 +493,11 @@ public class Guard_RESTInterface {
 	/**
 	 * Endpoint to create a new file
 	 *
-	 * @param email     the email
-	 * @param path      the path
-	 * @param r_groups  the r groups
-	 * @param rw_groups the rw groups
-	 * @param jwt       the jwt
+	 * @param email     the email of the user requesting to create the file
+	 * @param path      the path of the file
+	 * @param r_groups  the r groups of the file
+	 * @param rw_groups the rw groups of the file
+	 * @param jwt       the jwt token of the user
 	 * @return the response entity
 	 * @throws Exception the exception
 	 */
@@ -587,10 +578,10 @@ public class Guard_RESTInterface {
 					if (res == HttpStatus.OK) {
 						log.trace("File deleted");
 					} else {
-						log.error("Delete impossible");
+						log.error("Impossible to delete");
 					}
 				} catch (HttpClientErrorException | HttpServerErrorException ex) {
-					log.error("Impossible to delete");
+					log.error("Impossible to delete" + ex.getMessage());
 				}
 			}
 		} else {
@@ -603,15 +594,14 @@ public class Guard_RESTInterface {
 	}
 
 	/**
-	 * Gets user privilege.
+	 * Gets user privilege from the DB.
 	 *
 	 * @param email the email
 	 * @return the user privilege
 	 */
-	// Function to retrieve the user privilege from the DB
 	private UserPrivilege getUserPrivilege(String email) {
 		ArrayList<String> groups = null;
-		int admin = -1;
+		int admin = 0;
 		String userQuery = "SELECT groups, admin FROM Users WHERE email=?";
 		PreparedStatement preparedStatement;
 
@@ -644,13 +634,12 @@ public class Guard_RESTInterface {
 	}
 
 	/**
-	 * Secure path boolean.
+	 * Secure path to check for path traversal attempts.
 	 *
-	 * @param basePath the base path
-	 * @param userPath the user path
+	 * @param basePath the base path of the directory of files
+	 * @param userPath the user path requested
 	 * @return the boolean
 	 */
-	// Function to check for path traversal attempts
 	private boolean securePath(String basePath, String userPath) {
 		// Get the path of the directory
 		Path path = Paths.get(basePath).normalize();
@@ -665,5 +654,4 @@ public class Guard_RESTInterface {
 
 		return true;
 	}
-
 }

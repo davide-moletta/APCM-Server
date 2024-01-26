@@ -21,31 +21,31 @@ import java.util.Arrays;
 import javax.crypto.SecretKey;
 
 /**
- * The type Db rest interface.
+ * The type DB rest interface.
  */
 @RestController
 @RequestMapping("/api/v1")
 public class DB_RESTInterface {
 	/**
-	 * The constant conn.
+	 * The constant connenction.
 	 */
-	// Connection statically instantiated
 	private final Connection conn = DB_Connection.getDbconn();
 	/**
-	 * The constant log.
+	 * The constant logger.
 	 */
-	// Logger
 	private static final Logger log = LoggerFactory.getLogger(DB_RESTInterface.class);
 
 	/**
 	 * Endpoint for getting the password of the specified file if authorized
 	 *
-	 * @param path_hash  the path hash
-	 * @param file_hash  the file hash
-	 * @param email      the email
-	 * @param user_group the user group
-	 * @param admin      the admin
-	 * @return the key
+	 * @param path_hash  the path hash of the file
+	 * @param file_hash  the file hash of the file
+	 * @param email      the email of the user that is trying to access the file
+	 * @param user_group the user group of the user that is trying to access the
+	 *                   file
+	 * @param admin      the admin flag of the user that is trying to access the
+	 *                   file
+	 * @return the key to decrypt the file
 	 */
 	@GetMapping("/decryption_key")
 	public ResponseEntity<Response> get_key(@RequestParam(value = "path_hash") String path_hash,
@@ -132,13 +132,13 @@ public class DB_RESTInterface {
 	}
 
 	/**
-	 * Endpoint for getting the password of the specified file if authorized
+	 * Endpoint to create a new file
 	 *
-	 * @param path_hash the path hash
-	 * @param path      the path
-	 * @param email     the email
-	 * @param r_groups  the r groups
-	 * @param rw_groups the rw groups
+	 * @param path_hash the path hash of the new file
+	 * @param path      the path of the new file
+	 * @param email     the email of the user that is creating the file
+	 * @param r_groups  the r groups of the new file
+	 * @param rw_groups the rw groups of the new file
 	 * @return the response entity
 	 */
 	@PostMapping("/newFile")
@@ -214,10 +214,10 @@ public class DB_RESTInterface {
 	}
 
 	/**
-	 * Endpoint to save new file Hash
+	 * Endpoint to save file
 	 *
-	 * @param path_hash the path hash
-	 * @param file_hash the file hash
+	 * @param path_hash the path hash of the file
+	 * @param file_hash the file hash of the file
 	 * @return the response entity
 	 */
 	@PostMapping("/saveFile")
@@ -255,7 +255,7 @@ public class DB_RESTInterface {
 	/**
 	 * Endpoint to delete a file
 	 *
-	 * @param path_hash the path hash
+	 * @param path_hash the path hash of the file
 	 * @return the response entity
 	 */
 	@DeleteMapping("/deleteFile")
