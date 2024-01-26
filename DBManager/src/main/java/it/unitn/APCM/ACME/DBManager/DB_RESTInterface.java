@@ -29,12 +29,12 @@ public class DB_RESTInterface {
 	/**
 	 * The constant conn.
 	 */
-// Connection statically instantiated
+	// Connection statically instantiated
 	private final Connection conn = DB_Connection.getDbconn();
 	/**
 	 * The constant log.
 	 */
-// Logger
+	// Logger
 	private static final Logger log = LoggerFactory.getLogger(DB_RESTInterface.class);
 
 	/**

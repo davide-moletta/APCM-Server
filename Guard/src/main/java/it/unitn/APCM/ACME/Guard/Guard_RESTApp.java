@@ -13,7 +13,7 @@ import java.util.ArrayList;
 @SpringBootApplication
 public class Guard_RESTApp {
 	/**
-	 * The constant log.
+	 * The constant logger.
 	 */
 	private static final Logger log = LoggerFactory.getLogger(Guard_RESTApp.class);
 
@@ -25,7 +25,7 @@ public class Guard_RESTApp {
 	/**
 	 * The entry point of application.
 	 *
-	 * @param args the input arguments
+	 * @param args the input arguments which are specified in the launch.json file
 	 */
 	public static void main(String[] args) {
 		SpringApplication app = new SpringApplication(Guard_RESTApp.class);

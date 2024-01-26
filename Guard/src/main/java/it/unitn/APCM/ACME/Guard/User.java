@@ -5,15 +5,15 @@ package it.unitn.APCM.ACME.Guard;
  */
 public class User {
     /**
-     * The Email.
+     * The Email of the user.
      */
     private final String email;
     /**
-     * The Groups.
+     * The Groups of the user.
      */
     private final String groups;
     /**
-     * The Admin privilege.
+     * The Admin privilege of the user.
      */
     private final int admin;
 
@@ -35,25 +35,19 @@ public class User {
      *
      * @return the email
      */
-    public String getEmail() {
-        return email;
-    }
+    public String getEmail() { return email; }
 
     /**
      * Gets groups.
      *
      * @return the groups
      */
-    public String getGroups() {
-        return groups;
-    }
+    public String getGroups() { return groups; }
 
     /**
      * Gets admin.
      *
      * @return the admin
      */
-    public int getAdmin() {
-        return admin;
-    }
+    public int getAdmin() { return admin; }
 }

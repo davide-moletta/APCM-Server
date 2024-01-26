@@ -5,11 +5,11 @@ package it.unitn.APCM.ACME.ServerCommon;
  */
 public class UserPrivilege {
     /**
-     * The Admin.
+     * The Admin set to 1 if the user is admin, 0 otherwise.
      */
     private final int admin;
     /**
-     * The Groups.
+     * The Groups that the user is part of.
      */
     private final String groups;
 

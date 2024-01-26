@@ -17,23 +17,23 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * The type Db rest app.
+ * The type DB rest app.
  */
 @SpringBootApplication
 public class DB_RESTApp {
 	/**
-	 * The constant log.
+	 * The constant logger.
 	 */
 	private static final Logger log = LoggerFactory.getLogger(DB_RESTApp.class);
 	/**
-	 * The constant masterKey.
+	 * The constant masterKey used to decrypt file keys.
 	 */
 	protected static SecretKey masterKey;
 
 	/**
 	 * The entry point of application.
 	 *
-	 * @param args the input arguments
+	 * @param args the input arguments which are specified in the launch.json file
 	 */
 	public static void main(String[] args) {
 		SpringApplication app = new SpringApplication(DB_RESTApp.class);
@@ -47,6 +47,7 @@ public class DB_RESTApp {
 
 		Part[] parts = null;
 
+		// Get the Shamir key parts from the args 
 		if(real_args.size() < 3){
 			log.error("At least 3 keys are required");
 			throw new IllegalArgumentException("At least 3 keys are required");
@@ -59,18 +60,22 @@ public class DB_RESTApp {
 		}
 
 		try {
+			// Generate the Shamir key from the retrieved parts
 			byte[] keyByte = Secrets.join(parts);
 			SecretKey shamirKey =  new SecretKeySpec(keyByte, 0, keyByte.length, "AES");
+			// Decrypt the encrypted master key with the Shamir key
 			String effEncKey = System.getenv("EFFECTIVE_ENCRYPTED_KEY");
 			byte[] effEncKeyBytes  = Base64.getDecoder().decode(effEncKey);
 			byte[] masterKeyByte = (new CryptographyPrimitive()).decrypt(effEncKeyBytes, shamirKey);
+			// Instantiate the master key
 			masterKey = new SecretKeySpec(masterKeyByte, 0, masterKeyByte.length, "AES");
 
+			// Start the application
 			app.run(args);
 			log.info("DB_RESTApp started");
 		}
 		catch (NullPointerException e) {
-			log.error(e.toString());
+			log.error("Failed in starting the application" + e.toString());
 		}
 	}
 }

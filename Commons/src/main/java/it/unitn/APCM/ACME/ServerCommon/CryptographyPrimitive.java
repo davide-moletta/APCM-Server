@@ -37,12 +37,11 @@ public class CryptographyPrimitive {
     static final int IVLEN = 12;
 
     /**
-     * Gets hash.
+     * Function that returns the hash of a byte array.
      *
-     * @param hash the hash
+     * @param hash the byte array of content to hash
      * @return the hash
      */
-// Function that returns the hash of a byte array
     public String getHash(byte[] hash) {
         try {
             // Instantiate the SHA-512
@@ -60,11 +59,10 @@ public class CryptographyPrimitive {
     }
 
     /**
-     * Gets symmetric key.
+     * Function to generate a random symmetric key.
      *
      * @return the symmetric key
      */
-// Function to generate a random symmetric key
     public SecretKey getSymmetricKey() {
         SecretKey cipherKey = null;
 
@@ -84,13 +82,12 @@ public class CryptographyPrimitive {
     }
 
     /**
-     * Encrypt byte [ ].
+     * Encrypt byte [ ] with the specified simmetric key.
      *
      * @param textToEnc the text to enc
      * @param key       the key
      * @return the byte [ ]
      */
-// Function to encrypt a byte array with a symmetric key
     public byte[] encrypt(byte[] textToEnc, SecretKey key) {
         // check that there is some data to encrypt
         if (textToEnc.length == 0) {
@@ -125,13 +122,12 @@ public class CryptographyPrimitive {
     }
 
     /**
-     * Decrypt byte [ ].
+     * Decrypt byte [ ] with the specified simmetric key.
      *
      * @param encText the enc text
      * @param key     the key
      * @return the byte [ ]
      */
-// Function to decrypt a byte array with a symmetric key
     public byte[] decrypt(byte[] encText, SecretKey key) {
         // check that there is some data to decrypt
         if (encText.length == 0) {

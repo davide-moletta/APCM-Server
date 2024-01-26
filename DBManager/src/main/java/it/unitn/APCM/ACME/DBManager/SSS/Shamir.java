@@ -13,13 +13,13 @@ import org.mitre.secretsharing.codec.PartFormats;
 import it.unitn.APCM.ACME.ServerCommon.CryptographyPrimitive;
 
 /**
- * The type Shamir.
+ * The type Shamir used to generate the Shamir key with the secret key parts and to generate new keys when the Shamir password is changed.
  */
 public class Shamir {
     /**
      * The entry point of application.
      *
-     * @param args the input arguments
+     * @param args the input arguments which are the parts of the shamir secret key
      */
     public static void main(String[] args) {
         generateShamir();
@@ -27,7 +27,7 @@ public class Shamir {
     }
 
     /**
-     * Generate effective key.
+     * Generate effective key by generating a random key and encrypting it with the Shamir key.
      *
      * @param args the args
      */
@@ -46,7 +46,7 @@ public class Shamir {
     }
 
     /**
-     * Generate shamir.
+     * Generate shamir key using the parts given as input.
      */
     private static void generateShamir(){
         SecretKey cipherKey = (new CryptographyPrimitive()).getSymmetricKey();

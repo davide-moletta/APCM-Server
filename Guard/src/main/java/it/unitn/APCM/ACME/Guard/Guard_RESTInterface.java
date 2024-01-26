@@ -60,27 +60,27 @@ public class Guard_RESTInterface {
 	/**
 	 * The constant conn.
 	 */
-// Connection statically instantiated
+	// Connection statically instantiated
 	private final Connection conn = Guard_Connection.getDbconn();
 	/**
 	 * The constant log.
 	 */
-// Logger
+	// Logger
 	private static final Logger log = LoggerFactory.getLogger(Guard_RESTInterface.class);
 	/**
 	 * The constant dbServer_url.
 	 */
-// DB server url
+	// DB server url
 	private static final String dbServer_url = String.format("https://%s/api/v1/", Guard_RESTApp.srvdb);
 	/**
 	 * The constant fP.
 	 */
-// Files path
+	// Files path
 	private static final String fP = URI.create("Guard/src/main/java/it/unitn/APCM/ACME/Guard/Files/").toString();
 	/**
 	 * The constant algorithm.
 	 */
-// encryption algorithm
+	// encryption algorithm
 	static final String algorithm = "AES";
 
 	/**
@@ -561,34 +561,35 @@ public class Guard_RESTInterface {
 					File dir = new File(realpath);
 					dir.mkdirs();
 					File f = new File(realpath, splittedPath[indexName]);
-					if(f.createNewFile()){
+					if (f.createNewFile()) {
 						// Set the response header and status
 						response = "success";
 						status = HttpStatus.CREATED;
 					} else {
-						throw new ResourceAccessException("File already esisting: " + realpath + splittedPath[indexName]);
+						throw new ResourceAccessException(
+								"File already esisting: " + realpath + splittedPath[indexName]);
 					}
 				}
 			} catch (HttpClientErrorException | HttpServerErrorException e) {
 				log.error("Error in the response from DB server");
-			} catch(ResourceAccessException | IOException e){
+			} catch (ResourceAccessException | IOException e) {
 				log.error("Error in the creation of the file");
 
 				String DB_delete_url = dbServer_url + "deleteFile?" +
-					"path_hash=" + (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8));
-				
-				try{
+						"path_hash=" + (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8));
+
+				try {
 					log.trace(DB_delete_url);
-					ResponseEntity<String> ent = srt.exchange(DB_delete_url, HttpMethod.DELETE, null,String.class);
-				
+					ResponseEntity<String> ent = srt.exchange(DB_delete_url, HttpMethod.DELETE, null, String.class);
+
 					HttpStatusCode res = ent.getStatusCode();
 					log.trace("" + res);
-					if(res == HttpStatus.OK){
+					if (res == HttpStatus.OK) {
 						log.trace("File deleted");
 					} else {
 						log.error("Delete impossible");
 					}
-				} catch(HttpClientErrorException | HttpServerErrorException ex){
+				} catch (HttpClientErrorException | HttpServerErrorException ex) {
 					log.error("Impossible to delete");
 				}
 			}
@@ -607,7 +608,7 @@ public class Guard_RESTInterface {
 	 * @param email the email
 	 * @return the user privilege
 	 */
-// Function to retrieve the user privilege from the DB
+	// Function to retrieve the user privilege from the DB
 	private UserPrivilege getUserPrivilege(String email) {
 		ArrayList<String> groups = null;
 		int admin = -1;
@@ -649,7 +650,7 @@ public class Guard_RESTInterface {
 	 * @param userPath the user path
 	 * @return the boolean
 	 */
-// Function to check for path traversal attempts
+	// Function to check for path traversal attempts
 	private boolean securePath(String basePath, String userPath) {
 		// Get the path of the directory
 		Path path = Paths.get(basePath).normalize();

@@ -5,23 +5,23 @@ package it.unitn.APCM.ACME.ServerCommon;
  */
 public class Response {
     /**
-     * The Path hash.
+     * The Path hash of the file.
      */
     String path_hash;
     /**
-     * The Email.
+     * The Email of the user.
      */
     String email;
     /**
-     * The W mode.
+     * The W mode set to true if the user is allowed to write on the file.
      */
     boolean w_mode;
     /**
-     * The Auth.
+     * The Auth set to true if the user is authorized to open the file.
      */
     boolean auth;
     /**
-     * The Key.
+     * The Key to decrypt the file.
      */
     byte[] key;
 

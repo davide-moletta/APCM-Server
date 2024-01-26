@@ -29,10 +29,10 @@ public class SecureRestTemplateConfig {
 	private static SSLContext sslContext = null;
 
 	/**
-	 * Instantiates a new Secure rest template config.
+	 * Instantiates a new Secure rest template config that works with mTLS for
+	 * secure connections.
 	 */
-// RestTemplate implementation that works with mTLS for secure connections
-	public SecureRestTemplateConfig(){
+	public SecureRestTemplateConfig() {
 		if (sslContext == null) {
 			try {
 				// Get the environment variables
@@ -55,11 +55,13 @@ public class SecureRestTemplateConfig {
 						break;
 					}
 				}
-				if (x509km == null) throw new NullPointerException();
+				if (x509km == null)
+					throw new NullPointerException();
 
 				// TrustManagerFactory
 				KeyStore ts = KeyStore.getInstance("JKS");
-				InputStream tstoreStream = ClassLoader.getSystemClassLoader().getResourceAsStream("GuardC_truststore.jks");
+				InputStream tstoreStream = ClassLoader.getSystemClassLoader()
+						.getResourceAsStream("GuardC_truststore.jks");
 				ts.load(tstoreStream, null);
 				TrustManagerFactory tmf = TrustManagerFactory.getInstance("PKIX");
 				tmf.init(ts);
@@ -70,13 +72,15 @@ public class SecureRestTemplateConfig {
 						break;
 					}
 				}
-				if (x509tm == null) throw new NullPointerException();
+				if (x509tm == null)
+					throw new NullPointerException();
 
 				// Instantiate SecureContext
 				sslContext = SSLContext.getInstance("TLSv1.3");
-				sslContext.init(new KeyManager[]{x509km}, new TrustManager[]{x509tm}, new java.security.SecureRandom());
-			} catch (IOException | UnrecoverableKeyException | CertificateException | NoSuchAlgorithmException |
-					 KeyStoreException | KeyManagementException e) {
+				sslContext.init(new KeyManager[] { x509km }, new TrustManager[] { x509tm },
+						new java.security.SecureRandom());
+			} catch (IOException | UnrecoverableKeyException | CertificateException | NoSuchAlgorithmException
+					| KeyStoreException | KeyManagementException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -90,8 +94,10 @@ public class SecureRestTemplateConfig {
 	@Bean
 	public RestTemplate secureRestTemplate() {
 		// Create the secure RestTemplate
-		SSLConnectionSocketFactory sslSocketFactory = SSLConnectionSocketFactoryBuilder.create().setSslContext(sslContext).build();
-		HttpClientConnectionManager cm = PoolingHttpClientConnectionManagerBuilder.create().setSSLSocketFactory(sslSocketFactory).build();
+		SSLConnectionSocketFactory sslSocketFactory = SSLConnectionSocketFactoryBuilder.create()
+				.setSslContext(sslContext).build();
+		HttpClientConnectionManager cm = PoolingHttpClientConnectionManagerBuilder.create()
+				.setSSLSocketFactory(sslSocketFactory).build();
 		HttpClient httpClient = HttpClients.custom().setConnectionManager(cm).evictExpiredConnections().build();
 		HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
 		return new RestTemplate(factory);

@@ -7,16 +7,16 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 
 /**
- * The type Db connection.
+ * The type DB connection.
  */
 // Used to connect to the sqlite database of files
 public class DB_Connection {
 	/**
-	 * The constant dbconn.
+	 * The constant JDBC connection.
 	 */
 	private static final JDBC_Connection dbconn = new JDBC_Connection("db_files.sqlite");
 	/**
-	 * The constant log.
+	 * The constant logger.
 	 */
 	private static final Logger log = LoggerFactory.getLogger(DB_Connection.class);
 

@@ -19,9 +19,11 @@ public class JSONToArray extends ArrayList<String> {
 	 */
 	public JSONToArray(String str) throws JsonProcessingException {
 		if (str != null) {
+			// Convert JSON object to ArrayList of strings
 			ObjectMapper objectMapper = new ObjectMapper();
 			TypeReference<ArrayList<String>> typeReference = new TypeReference<>() {};
 			try {
+				// Add all the elements of the object to the arraylist
 				this.addAll(objectMapper.readValue(str, typeReference));
 			} catch (JsonProcessingException e) {
 				throw new RuntimeException(e);

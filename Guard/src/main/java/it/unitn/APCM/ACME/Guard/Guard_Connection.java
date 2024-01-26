@@ -12,11 +12,11 @@ import java.sql.Connection;
  */
 public class Guard_Connection {
 	/**
-	 * The constant dbconn.
+	 * The constant JDBC connection.
 	 */
 	private static final JDBC_Connection dbconn = new JDBC_Connection("db_users.sqlite");
 	/**
-	 * The constant log.
+	 * The constant logger.
 	 */
 	private static final Logger log = LoggerFactory.getLogger(Guard_Connection.class);
 
