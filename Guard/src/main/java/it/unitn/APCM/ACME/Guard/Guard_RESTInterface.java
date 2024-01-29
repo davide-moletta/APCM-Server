@@ -33,6 +33,7 @@ import it.unitn.APCM.ACME.Guard.Objects.UserPrivilege;
 import it.unitn.APCM.ACME.ServerCommon.CryptographyPrimitive;
 import it.unitn.APCM.ACME.ServerCommon.JSONToArray;
 import it.unitn.APCM.ACME.ServerCommon.Response;
+import it.unitn.APCM.ACME.ServerCommon.SecureRestTemplateConfig;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -84,8 +85,7 @@ public class Guard_RESTInterface {
 	/**
 	 * The Secure rest template.
 	 */
-	@Autowired
-	private RestTemplate secureRestTemplate;
+	private RestTemplate secureRestTemplate = (new SecureRestTemplateConfig("Guard_keystore.jks", "GuardC_truststore.jks")).secureRestTemplate();
 
 	/**
 	 * The Jwt utils.

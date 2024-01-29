@@ -32,7 +32,7 @@ public class SecureRestTemplateConfig {
 	 * Instantiates a new Secure rest template config that works with mTLS for
 	 * secure connections.
 	 */
-	public SecureRestTemplateConfig() {
+	public SecureRestTemplateConfig(String keyStoreName, String keyTrustname) {
 		if (sslContext == null) {
 			try {
 				// Get the environment variables
@@ -44,7 +44,7 @@ public class SecureRestTemplateConfig {
 
 				// KeyManagerFactory
 				KeyStore ks = KeyStore.getInstance("JKS");
-				InputStream kstoreStream = ClassLoader.getSystemClassLoader().getResourceAsStream("Guard_keystore.jks");
+				InputStream kstoreStream = ClassLoader.getSystemClassLoader().getResourceAsStream(keyStoreName);
 				if(kstoreStream == null){
 					System.out.println("NULL");
 				}
@@ -64,7 +64,7 @@ public class SecureRestTemplateConfig {
 				// TrustManagerFactory
 				KeyStore ts = KeyStore.getInstance("JKS");
 				InputStream tstoreStream = ClassLoader.getSystemClassLoader()
-						.getResourceAsStream("GuardC_truststore.jks");
+						.getResourceAsStream(keyTrustname);
 				ts.load(tstoreStream, null);
 				TrustManagerFactory tmf = TrustManagerFactory.getInstance("PKIX");
 				tmf.init(ts);

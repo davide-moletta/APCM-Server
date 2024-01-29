@@ -19,12 +19,12 @@ import it.unitn.APCM.ACME.ServerCommon.SecureRestTemplateConfig;
 @SpringBootTest 
 public class DBManagerTesting {
     
-    RestTemplate rest = (new SecureRestTemplateConfig()).secureRestTemplate();
+    RestTemplate rest = (new SecureRestTemplateConfig("Guard_keystore.jks", "GuardC_truststore.jks")).secureRestTemplate();
     String path, email, r_groups, rw_groups, user_groups, path_hash, file_hash, url = "";
 
     @Test
     public void testCreateFirstFile() throws Exception  {
-        path = "test14.txt";
+        path = "test17.txt";
         email = "user@amce.local";
         r_groups = "hr,students";
         rw_groups = "hr";
@@ -49,7 +49,7 @@ public class DBManagerTesting {
 
     @Test
     public void testCreateSecondFile() throws Exception  {
-        path = "test15.txt";
+        path = "test18.txt";
         email = "user@amce.local";
         r_groups = "hr,students";
         rw_groups = "hr";
@@ -74,7 +74,7 @@ public class DBManagerTesting {
 
     @Test
     public void testCreateFileAlreadyExisting() throws Exception  {
-        path = "test14.txt";
+        path = "test17.txt";
         email = "user@amce.local";
         r_groups = "hr,students";
         rw_groups = "hr";
@@ -114,7 +114,7 @@ public class DBManagerTesting {
 
     @Test
     public void testGetDecryptionKeyAdmin() throws Exception  {
-        path = "test14.txt";
+        path = "test17.txt";
         file_hash = "";
         email = "teacher@amce.local";
         user_groups = "teacher";
@@ -143,7 +143,7 @@ public class DBManagerTesting {
 
     @Test
     public void testGetDecryptionKeyOwner() throws Exception  {
-        path = "test14.txt";
+        path = "test17.txt";
         file_hash = "";
         email = "user@amce.local";
         user_groups = "user";
@@ -172,7 +172,7 @@ public class DBManagerTesting {
 
     @Test
     public void testGetDecryptionKeyAuthorizedWriteUser() throws Exception  {
-        path = "test14.txt";
+        path = "test17.txt";
         file_hash = "";
         email = "student@amce.local";
         user_groups = "hr";
@@ -201,7 +201,7 @@ public class DBManagerTesting {
 
     @Test
     public void testGetDecryptionKeyAuthorizedReadUser() throws Exception  {
-        path = "test14.txt";
+        path = "test17.txt";
         file_hash = "";
         email = "student@amce.local";
         user_groups = "students";
@@ -230,7 +230,7 @@ public class DBManagerTesting {
 
     @Test
     public void testGetDecryptionKeyUnauthorizedUser() throws Exception  {
-        path = "test14.txt";
+        path = "test17.txt";
         file_hash = "";
         email = "teacher@amce.local";
         user_groups = "teacher";
@@ -255,7 +255,7 @@ public class DBManagerTesting {
 
     @Test
     public void testGetDecryptionKeyCorruptedFile() throws Exception  {
-        path = "test14.txt";
+        path = "test17.txt";
         file_hash = "WrongHash";
         email = "teacher@amce.local";
         user_groups = "teacher";
@@ -320,7 +320,7 @@ public class DBManagerTesting {
 
     @Test
     public void testSaveFile() throws Exception  {
-        path = "test14.txt";
+        path = "test17.txt";
         file_hash = "newFileHash";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
         url = "https://localhost:8091/api/v1/saveFile?" + 
@@ -375,7 +375,7 @@ public class DBManagerTesting {
 
     @Test
     public void testDeleteFile() throws Exception  {
-        path = "test16.txt";
+        path = "test19.txt";
         email = "user@amce.local";
         r_groups = "hr,students";
         rw_groups = "hr";
@@ -411,7 +411,7 @@ public class DBManagerTesting {
 
     @Test
     public void testDeleteNotExistingFile() throws Exception  {
-        path = "test15.txt";
+        path = "test18.txt";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
         url = "https://localhost:8091/api/v1/deleteFile?" + 
             "path_hash=" + path_hash;
