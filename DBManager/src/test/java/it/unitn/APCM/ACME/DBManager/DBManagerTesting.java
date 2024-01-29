@@ -19,14 +19,12 @@ import it.unitn.APCM.ACME.ServerCommon.SecureRestTemplateConfig;
 @SpringBootTest 
 public class DBManagerTesting {
     
-    RestTemplate rest = null;
+    RestTemplate rest = (new SecureRestTemplateConfig()).secureRestTemplate();
     String path, email, r_groups, rw_groups, user_groups, path_hash, file_hash, url = "";
 
     @Test
     public void testCreateFirstFile() throws Exception  {
-        rest = (new SecureRestTemplateConfig()).secureRestTemplate();
-        
-        path = "test11.txt";
+        path = "test14.txt";
         email = "user@amce.local";
         r_groups = "hr,students";
         rw_groups = "hr";
@@ -51,9 +49,7 @@ public class DBManagerTesting {
 
     @Test
     public void testCreateSecondFile() throws Exception  {
-        rest = (new SecureRestTemplateConfig()).secureRestTemplate();
-        
-        path = "test12.txt";
+        path = "test15.txt";
         email = "user@amce.local";
         r_groups = "hr,students";
         rw_groups = "hr";
@@ -78,9 +74,7 @@ public class DBManagerTesting {
 
     @Test
     public void testCreateFileAlreadyExisting() throws Exception  {
-         rest = (new SecureRestTemplateConfig()).secureRestTemplate();
-        
-        path = "test11.txt";
+        path = "test14.txt";
         email = "user@amce.local";
         r_groups = "hr,students";
         rw_groups = "hr";
@@ -104,18 +98,8 @@ public class DBManagerTesting {
     }
 
     @Test
-    public void testCreateFileWithoutPathHash() throws Exception  {
-         rest = (new SecureRestTemplateConfig()).secureRestTemplate();
-        
-        path = "test12.txt";
-        email = "user@amce.local";
-        r_groups = "hr,students";
-        rw_groups = "hr";
-        url = "https://localhost:8091/api/v1/newFile?" + 
-            "&path=" + path +
-            "&email=" + email +
-            "&r_groups=" + r_groups +
-			"&rw_groups=" + rw_groups;
+    public void testCreateFileBadRequest() throws Exception  {
+        url = "https://localhost:8091/api/v1/newFile";
 
         ResponseEntity<String> res = null;
 
@@ -130,9 +114,7 @@ public class DBManagerTesting {
 
     @Test
     public void testGetDecryptionKeyAdmin() throws Exception  {
-         rest = (new SecureRestTemplateConfig()).secureRestTemplate();
-        
-        path = "test11.txt";
+        path = "test14.txt";
         file_hash = "";
         email = "teacher@amce.local";
         user_groups = "teacher";
@@ -161,9 +143,7 @@ public class DBManagerTesting {
 
     @Test
     public void testGetDecryptionKeyOwner() throws Exception  {
-         rest = (new SecureRestTemplateConfig()).secureRestTemplate();
-        
-        path = "test11.txt";
+        path = "test14.txt";
         file_hash = "";
         email = "user@amce.local";
         user_groups = "user";
@@ -192,9 +172,7 @@ public class DBManagerTesting {
 
     @Test
     public void testGetDecryptionKeyAuthorizedWriteUser() throws Exception  {
-         rest = (new SecureRestTemplateConfig()).secureRestTemplate();
-        
-        path = "test11.txt";
+        path = "test14.txt";
         file_hash = "";
         email = "student@amce.local";
         user_groups = "hr";
@@ -223,9 +201,7 @@ public class DBManagerTesting {
 
     @Test
     public void testGetDecryptionKeyAuthorizedReadUser() throws Exception  {
-         rest = (new SecureRestTemplateConfig()).secureRestTemplate();
-        
-        path = "test11.txt";
+        path = "test14.txt";
         file_hash = "";
         email = "student@amce.local";
         user_groups = "students";
@@ -254,9 +230,7 @@ public class DBManagerTesting {
 
     @Test
     public void testGetDecryptionKeyUnauthorizedUser() throws Exception  {
-         rest = (new SecureRestTemplateConfig()).secureRestTemplate();
-        
-        path = "test11.txt";
+        path = "test14.txt";
         file_hash = "";
         email = "teacher@amce.local";
         user_groups = "teacher";
@@ -281,9 +255,7 @@ public class DBManagerTesting {
 
     @Test
     public void testGetDecryptionKeyCorruptedFile() throws Exception  {
-         rest = (new SecureRestTemplateConfig()).secureRestTemplate();
-        
-        path = "test11.txt";
+        path = "test14.txt";
         file_hash = "WrongHash";
         email = "teacher@amce.local";
         user_groups = "teacher";
@@ -308,8 +280,6 @@ public class DBManagerTesting {
 
     @Test
     public void testGetDecryptionKeyWrongPathHash() throws Exception  {
-         rest = (new SecureRestTemplateConfig()).secureRestTemplate();
-        
         path = "NotExistingPath.txt";
         file_hash = "";
         email = "teacher@amce.local";
@@ -334,10 +304,23 @@ public class DBManagerTesting {
     }
 
     @Test
-    public void testSaveFile() throws Exception  {
-         rest = (new SecureRestTemplateConfig()).secureRestTemplate();
+    public void testGetDecryptionKeyBadRequest() throws Exception  {
+        url = "https://localhost:8091/api/v1/decryption_key";
+
+        ResponseEntity<Response> res = null;
         
-        path = "test11.txt";
+        try{
+            res = rest.getForEntity(url, Response.class);
+        } catch (HttpClientErrorException | HttpServerErrorException e){
+            res = new ResponseEntity<>(e.getStatusCode());
+        }
+            
+        Assertions.assertEquals(400, res.getStatusCode().value());
+    }
+
+    @Test
+    public void testSaveFile() throws Exception  {
+        path = "test14.txt";
         file_hash = "newFileHash";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
         url = "https://localhost:8091/api/v1/saveFile?" + 
@@ -357,8 +340,6 @@ public class DBManagerTesting {
 
     @Test
     public void testSaveFileWrongPathHash() throws Exception  {
-         rest = (new SecureRestTemplateConfig()).secureRestTemplate();
-        
         path = "ThisIsNotAnExistingPath.txt";
         file_hash = "newFileHash";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
@@ -378,10 +359,23 @@ public class DBManagerTesting {
     }
 
     @Test
-    public void testDeleteFile() throws Exception  {
-        rest = (new SecureRestTemplateConfig()).secureRestTemplate();
+    public void testSaveFileBadRequest() throws Exception  {
+        url = "https://localhost:8091/api/v1/saveFile?";
+
+        ResponseEntity<String> res = null;
         
-        path = "test13.txt";
+        try{
+            res = rest.postForEntity(url, null, String.class);
+        } catch (HttpClientErrorException | HttpServerErrorException e){
+            res = new ResponseEntity<>(e.getStatusCode());
+        }
+            
+        Assertions.assertEquals(400, res.getStatusCode().value());
+    }
+
+    @Test
+    public void testDeleteFile() throws Exception  {
+        path = "test16.txt";
         email = "user@amce.local";
         r_groups = "hr,students";
         rw_groups = "hr";
@@ -417,9 +411,7 @@ public class DBManagerTesting {
 
     @Test
     public void testDeleteNotExistingFile() throws Exception  {
-         rest = (new SecureRestTemplateConfig()).secureRestTemplate();
-        
-        path = "test12.txt";
+        path = "test15.txt";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
         url = "https://localhost:8091/api/v1/deleteFile?" + 
             "path_hash=" + path_hash;
@@ -436,10 +428,20 @@ public class DBManagerTesting {
         Assertions.assertEquals(500, res.getStatusCode().value());
     }
 
+    @Test
+    public void testDeleteFileBadRequest() throws Exception  {
+        url = "https://localhost:8091/api/v1/deleteFile";
 
-
-
-
+        ResponseEntity<String> res = null;
+        
+        try{
+            res = rest.exchange(url, HttpMethod.DELETE, null, String.class);
+        } catch (HttpClientErrorException | HttpServerErrorException e){
+            res = new ResponseEntity<>(e.getStatusCode());
+        }
+            
+        Assertions.assertEquals(400, res.getStatusCode().value());
+    }
 }
 
 
