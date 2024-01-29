@@ -1,4 +1,4 @@
-package it.unitn.APCM.ACME.Guard.Objects;
+package it.unitn.APCM.ACME.ServerCommon;
 
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -45,6 +45,9 @@ public class SecureRestTemplateConfig {
 				// KeyManagerFactory
 				KeyStore ks = KeyStore.getInstance("JKS");
 				InputStream kstoreStream = ClassLoader.getSystemClassLoader().getResourceAsStream("Guard_keystore.jks");
+				if(kstoreStream == null){
+					System.out.println("NULL");
+				}
 				ks.load(kstoreStream, kstore_pw.toCharArray());
 				KeyManagerFactory kmf = KeyManagerFactory.getInstance("PKIX");
 				kmf.init(ks, k_pw.toCharArray());

@@ -107,7 +107,7 @@ public class DB_RESTInterface {
 							byte[] decKey = (new CryptographyPrimitive()).decrypt(encryptionKey,
 									DB_RESTApp.masterKey);
 							res.set_key(decKey);
-							status = HttpStatus.CREATED;
+							status = HttpStatus.OK;
 						} else {
 							log.error("User not authorized");
 							status = HttpStatus.UNAUTHORIZED;
@@ -242,7 +242,7 @@ public class DB_RESTInterface {
 			// Execute the query and check if it was successful
 			if (ps.executeUpdate() != 0) {
 				res = "success";
-				status = HttpStatus.CREATED;
+				status = HttpStatus.OK;
 			}
 		} catch (SQLException e) {
 			log.error("Error in updating file hash in the db: " + e.getMessage());
