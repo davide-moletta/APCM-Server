@@ -50,9 +50,15 @@ public class DB_RESTApp {
 		//Needed for testing purposes
 		if(real_args.size() < 3){
 			real_args.clear();
-			real_args.add(System.getenv("KEY1"));
-			real_args.add(System.getenv("KEY2"));
-			real_args.add(System.getenv("KEY3"));
+			if(System.getenv("KEY1") != null){
+				real_args.add(System.getenv("KEY1"));
+			}
+			if(System.getenv("KEY2") != null){
+				real_args.add(System.getenv("KEY2"));
+			}
+			if(System.getenv("KEY3") != null){
+				real_args.add(System.getenv("KEY3"));
+			}
 		} 
 		
 		// Get the Shamir key parts from the args
