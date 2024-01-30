@@ -180,33 +180,37 @@ public class DB_RESTInterface {
 			SecretKey sK = (new CryptographyPrimitive()).getSymmetricKey();
 			byte[] enc_key = (new CryptographyPrimitive()).encrypt(sK.getEncoded(), DB_RESTApp.masterKey);
 
-			// Format the groups in JSON format
-			r_groups = r_groups.replace(",", "\",\"");
-			r_groups = "[\"" + r_groups + "\"]";
+			if (enc_key != null) {
+				// Format the groups in JSON format
+				r_groups = r_groups.replace(",", "\",\"");
+				r_groups = "[\"" + r_groups + "\"]";
 
-			rw_groups = rw_groups.replace(",", "\",\"");
-			rw_groups = "[\"" + rw_groups + "\"]";
+				rw_groups = rw_groups.replace(",", "\",\"");
+				rw_groups = "[\"" + rw_groups + "\"]";
 
-			// Prepare the query to insert the file
-			String insertQuery = "INSERT INTO Files(path_hash, file_hash, path, owner, rw_groups, r_groups, encryption_key) VALUES (?,?,?,?,?,?,?)";
-			try {
-				// Set the parameters
-				PreparedStatement prepStatement = conn.prepareStatement(insertQuery);
-				prepStatement.setString(1, path_hash);
-				prepStatement.setString(2, "");
-				prepStatement.setString(3, path);
-				prepStatement.setString(4, email);
-				prepStatement.setString(5, rw_groups);
-				prepStatement.setString(6, r_groups);
-				prepStatement.setBytes(7, enc_key);
+				// Prepare the query to insert the file
+				String insertQuery = "INSERT INTO Files(path_hash, file_hash, path, owner, rw_groups, r_groups, encryption_key) VALUES (?,?,?,?,?,?,?)";
+				try {
+					// Set the parameters
+					PreparedStatement prepStatement = conn.prepareStatement(insertQuery);
+					prepStatement.setString(1, path_hash);
+					prepStatement.setString(2, "");
+					prepStatement.setString(3, path);
+					prepStatement.setString(4, email);
+					prepStatement.setString(5, rw_groups);
+					prepStatement.setString(6, r_groups);
+					prepStatement.setBytes(7, enc_key);
 
-				// Execute the query and check if it was successful
-				if (prepStatement.executeUpdate() != 0) {
-					status = HttpStatus.CREATED;
-					res = "success";
+					// Execute the query and check if it was successful
+					if (prepStatement.executeUpdate() != 0) {
+						status = HttpStatus.CREATED;
+						res = "success";
+					}
+				} catch (SQLException e) {
+					log.error("Error in inserting file in the db. Path_hash is not unique");
 				}
-			} catch (SQLException e) {
-				log.error("Error in inserting file in the db. Path_hash is not unique");
+			} else {
+				// enc_key null. Maybe
 			}
 		}
 

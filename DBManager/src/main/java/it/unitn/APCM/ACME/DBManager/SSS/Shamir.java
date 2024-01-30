@@ -2,6 +2,7 @@ package it.unitn.APCM.ACME.DBManager.SSS;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Base64;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -42,7 +43,7 @@ public class Shamir {
 
         SecretKey effectiveKey = (new CryptographyPrimitive()).getSymmetricKey();
 
-        (new CryptographyPrimitive()).encrypt(effectiveKey.getEncoded(), masterKey);
+        byte[] effectiveEncKey = (new CryptographyPrimitive()).encrypt(effectiveKey.getEncoded(), masterKey);
     }
 
     /**

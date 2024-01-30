@@ -65,14 +65,19 @@ public class DB_RESTApp {
 			SecretKey shamirKey =  new SecretKeySpec(keyByte, 0, keyByte.length, "AES");
 			// Decrypt the encrypted master key with the Shamir key
 			String effEncKey = System.getenv("EFFECTIVE_ENCRYPTED_KEY");
-			byte[] effEncKeyBytes  = Base64.getDecoder().decode(effEncKey);
-			byte[] masterKeyByte = (new CryptographyPrimitive()).decrypt(effEncKeyBytes, shamirKey);
-			// Instantiate the master key
-			masterKey = new SecretKeySpec(masterKeyByte, 0, masterKeyByte.length, "AES");
+			if (effEncKey != null) {
+				byte[] effEncKeyBytes = Base64.getDecoder().decode(effEncKey);
+				byte[] masterKeyByte = (new CryptographyPrimitive()).decrypt(effEncKeyBytes, shamirKey);
+				// Instantiate the master key
+				masterKey = new SecretKeySpec(masterKeyByte, 0, masterKeyByte.length, "AES");
 
-			// Start the application
-			app.run(args);
-			log.info("DB_RESTApp started");
+				// Start the application
+				app.run(args);
+				log.info("DB_RESTApp started");
+			}
+			else {
+				log.error("EFFECTIVE_ENCRYPTED_KEY envvar must be present");
+			}
 		}
 		catch (NullPointerException e) {
 			log.error("Failed in starting the application" + e.toString());
