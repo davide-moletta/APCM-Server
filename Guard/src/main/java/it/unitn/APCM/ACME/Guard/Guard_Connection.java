@@ -14,7 +14,7 @@ public class Guard_Connection {
 	/**
 	 * The constant JDBC connection.
 	 */
-	private static final JDBC_Connection dbconn = new JDBC_Connection("db_users.sqlite");
+	private static final JDBC_Connection dbconn = new JDBC_Connection(System.getenv("DB_GUARD"));
 	/**
 	 * The constant logger.
 	 */

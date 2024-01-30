@@ -1,8 +1,12 @@
 package it.unitn.APCM.ACME.DBManager;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
@@ -16,13 +20,16 @@ import it.unitn.APCM.ACME.ServerCommon.Response;
 import it.unitn.APCM.ACME.ServerCommon.SecureRestTemplateConfig;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest 
-public class DBManagerTesting {
-    
+@SpringBootTest
+@TestMethodOrder(OrderAnnotation.class)
+public class DBManagerTesting {  
+    @LocalServerPort
+    private int port;
     RestTemplate rest = (new SecureRestTemplateConfig("Guard_keystore.jks", "GuardC_truststore.jks")).secureRestTemplate();
     String path, email, r_groups, rw_groups, user_groups, path_hash, file_hash, url = "";
 
     @Test
+    @Order(1)
     public void testCreateFirstFile() throws Exception  {
         path = "test17.txt";
         email = "user@amce.local";
@@ -48,6 +55,7 @@ public class DBManagerTesting {
     }
 
     @Test
+    @Order(2)
     public void testCreateSecondFile() throws Exception  {
         path = "test18.txt";
         email = "user@amce.local";
@@ -73,6 +81,7 @@ public class DBManagerTesting {
     }
 
     @Test
+    @Order(3)
     public void testCreateFileAlreadyExisting() throws Exception  {
         path = "test17.txt";
         email = "user@amce.local";
@@ -98,6 +107,7 @@ public class DBManagerTesting {
     }
 
     @Test
+    @Order(4)
     public void testCreateFileBadRequest() throws Exception  {
         url = "https://localhost:8091/api/v1/newFile";
 
@@ -113,6 +123,7 @@ public class DBManagerTesting {
     }
 
     @Test
+    @Order(5)
     public void testGetDecryptionKeyAdmin() throws Exception  {
         path = "test17.txt";
         file_hash = "";
@@ -142,6 +153,7 @@ public class DBManagerTesting {
     }
 
     @Test
+    @Order(6)
     public void testGetDecryptionKeyOwner() throws Exception  {
         path = "test17.txt";
         file_hash = "";
@@ -171,6 +183,7 @@ public class DBManagerTesting {
     }
 
     @Test
+    @Order(7)
     public void testGetDecryptionKeyAuthorizedWriteUser() throws Exception  {
         path = "test17.txt";
         file_hash = "";
@@ -200,6 +213,7 @@ public class DBManagerTesting {
     }
 
     @Test
+    @Order(8)
     public void testGetDecryptionKeyAuthorizedReadUser() throws Exception  {
         path = "test17.txt";
         file_hash = "";
@@ -229,6 +243,7 @@ public class DBManagerTesting {
     }
 
     @Test
+    @Order(9)
     public void testGetDecryptionKeyUnauthorizedUser() throws Exception  {
         path = "test17.txt";
         file_hash = "";
@@ -254,6 +269,7 @@ public class DBManagerTesting {
     } 
 
     @Test
+    @Order(10)
     public void testGetDecryptionKeyCorruptedFile() throws Exception  {
         path = "test17.txt";
         file_hash = "WrongHash";
@@ -279,6 +295,7 @@ public class DBManagerTesting {
     }
 
     @Test
+    @Order(11)
     public void testGetDecryptionKeyWrongPathHash() throws Exception  {
         path = "NotExistingPath.txt";
         file_hash = "";
@@ -304,6 +321,7 @@ public class DBManagerTesting {
     }
 
     @Test
+    @Order(12)
     public void testGetDecryptionKeyBadRequest() throws Exception  {
         url = "https://localhost:8091/api/v1/decryption_key";
 
@@ -319,6 +337,7 @@ public class DBManagerTesting {
     }
 
     @Test
+    @Order(13)
     public void testSaveFile() throws Exception  {
         path = "test17.txt";
         file_hash = "newFileHash";
@@ -339,6 +358,7 @@ public class DBManagerTesting {
     }
 
     @Test
+    @Order(14)
     public void testSaveFileWrongPathHash() throws Exception  {
         path = "ThisIsNotAnExistingPath.txt";
         file_hash = "newFileHash";
@@ -359,6 +379,7 @@ public class DBManagerTesting {
     }
 
     @Test
+    @Order(15)
     public void testSaveFileBadRequest() throws Exception  {
         url = "https://localhost:8091/api/v1/saveFile?";
 
@@ -374,32 +395,14 @@ public class DBManagerTesting {
     }
 
     @Test
+    @Order(16)
     public void testDeleteFile() throws Exception  {
-        path = "test19.txt";
-        email = "user@amce.local";
-        r_groups = "hr,students";
-        rw_groups = "hr";
-        path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
-        url = "https://localhost:8091/api/v1/newFile?" + 
-            "path_hash=" + path_hash +
-            "&path=" + path +
-            "&email=" + email +
-            "&r_groups=" + r_groups +
-			"&rw_groups=" + rw_groups;
-
+       
         ResponseEntity<String> res = null;
-        
-        try{
-            res = rest.postForEntity(url, null, String.class);
-        } catch (HttpClientErrorException e){
-            res = new ResponseEntity<>(e.getStatusCode());
-        }
         
         url = "https://localhost:8091/api/v1/deleteFile?" + 
             "path_hash=" + path_hash;
 
-        res = null;
-        
         try{
             res = rest.exchange(url, HttpMethod.DELETE, null, String.class);
         } catch (HttpClientErrorException | HttpServerErrorException e){
@@ -410,6 +413,7 @@ public class DBManagerTesting {
     }
 
     @Test
+    @Order(17)
     public void testDeleteNotExistingFile() throws Exception  {
         path = "test18.txt";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
@@ -429,6 +433,7 @@ public class DBManagerTesting {
     }
 
     @Test
+    @Order(18)
     public void testDeleteFileBadRequest() throws Exception  {
         url = "https://localhost:8091/api/v1/deleteFile";
 

@@ -1,6 +1,10 @@
 package it.unitn.APCM.ACME.Guard;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.TestMethodOrder;
 //import org.junit.jupiter.api.Test;
 import org.junit.Test;
 
@@ -25,6 +29,7 @@ import java.util.List;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = Guard_RESTApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TestMethodOrder(OrderAnnotation.class)
 // @ActiveProfiles("test") // for application-test.properties
 public class GuardTesting {
 
@@ -32,7 +37,13 @@ public class GuardTesting {
     private int port;
     RestTemplate rest = (new SecureRestTemplateConfig("Client_keystore.jks", "Client_truststore.jks")).secureRestTemplate();
 
+    @BeforeAll
+    public void before(){
+        System.out.println("Before");
+    }
+
     @Test
+    @Order(1)
     public void login() throws Exception  {
         String credentials = "{\"email\": \"test2@acme.local\", \"password\":\"test\"}";
         String url = "https://localhost:%d/api/v1".formatted(port)+"/login";
@@ -55,6 +66,7 @@ public class GuardTesting {
     }
 
     @Test
+    @Order(2)
     public void loginWrongPSW() throws Exception  {
         String credentials = "{\"email\": \"test2@acme.local\", \"password\":\"wrongPsw\"}";
         String url = "https://localhost:%d/api/v1".formatted(port)+"/login";
@@ -71,6 +83,7 @@ public class GuardTesting {
     }
 
     @Test
+    @Order(3)
     public void loginWrongExistingUser() throws Exception  {
         String credentials = "{\"email\": \"aaa@acme.local\", \"password\":\"wrongPsw\"}";
         String url = "https://localhost:%d/api/v1".formatted(port)+"/login";
@@ -87,6 +100,7 @@ public class GuardTesting {
     }
 
     @Test
+    @Order(4)
     public void loginWrongNonExistingUser() throws Exception  {
         String credentials = "{\"email\": \"bbb@acme.local\", \"password\":\"randompw\"}";
         String url = "https://localhost:%d/api/v1".formatted(port)+"/login";
@@ -103,6 +117,7 @@ public class GuardTesting {
     }
 
     @Test
+    @Order(5)
     public void loginBadRequest() throws Exception  {
         String url = "https://localhost:%d/api/v1".formatted(port)+"/login";
 

@@ -14,7 +14,7 @@ public class DB_Connection {
 	/**
 	 * The constant JDBC connection.
 	 */
-	private static final JDBC_Connection dbconn = new JDBC_Connection("db_files.sqlite");
+	private static final JDBC_Connection dbconn = new JDBC_Connection(System.getenv("DB_DBMANAGER"));
 	/**
 	 * The constant logger.
 	 */
