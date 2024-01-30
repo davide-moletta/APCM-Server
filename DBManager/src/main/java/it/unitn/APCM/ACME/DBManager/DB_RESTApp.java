@@ -46,12 +46,20 @@ public class DB_RESTApp {
 		}
 
 		Part[] parts = null;
-
-		// Get the Shamir key parts from the args 
+ 
+		//Needed for testing purposes
+		if(real_args.size() < 3){
+			real_args.clear();
+			real_args.add(System.getenv("KEY1"));
+			real_args.add(System.getenv("KEY2"));
+			real_args.add(System.getenv("KEY3"));
+		} 
+		
+		// Get the Shamir key parts from the args
 		if(real_args.size() < 3){
 			log.error("At least 3 keys are required");
 			throw new IllegalArgumentException("At least 3 keys are required");
-		} else {
+		}else {
 			parts = new Part[real_args.size()];
 
 			for(int i = 0; i < real_args.size(); i++){

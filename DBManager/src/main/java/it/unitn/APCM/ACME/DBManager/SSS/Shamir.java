@@ -2,7 +2,6 @@ package it.unitn.APCM.ACME.DBManager.SSS;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.Base64;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;

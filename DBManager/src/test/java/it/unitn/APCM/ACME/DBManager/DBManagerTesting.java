@@ -25,10 +25,8 @@ import it.unitn.APCM.ACME.ServerCommon.SecureRestTemplateConfig;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest(
         classes = DB_RESTApp.class,
-        args = {""},
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        useMainMethod = SpringBootTest.UseMainMethod.ALWAYS
-)
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, 
+        useMainMethod = SpringBootTest.UseMainMethod.ALWAYS)
 public class DBManagerTesting {
 
     @LocalServerPort
@@ -39,7 +37,7 @@ public class DBManagerTesting {
     @Test
     @Order(1)
     public void testCreateFirstFile() throws Exception  {
-        path = "test17.txt";
+        path = "test31.txt";
         email = "user@amce.local";
         r_groups = "hr,students";
         rw_groups = "hr";
@@ -65,7 +63,7 @@ public class DBManagerTesting {
     @Test
     @Order(2)
     public void testCreateSecondFile() throws Exception  {
-        path = "test18.txt";
+        path = "test32.txt";
         email = "user@amce.local";
         r_groups = "hr,students";
         rw_groups = "hr";
@@ -91,7 +89,7 @@ public class DBManagerTesting {
     @Test
     @Order(3)
     public void testCreateFileAlreadyExisting() throws Exception  {
-        path = "test17.txt";
+        path = "test31.txt";
         email = "user@amce.local";
         r_groups = "hr,students";
         rw_groups = "hr";
@@ -133,7 +131,7 @@ public class DBManagerTesting {
     @Test
     @Order(5)
     public void testGetDecryptionKeyAdmin() throws Exception  {
-        path = "test17.txt";
+        path = "test31.txt";
         file_hash = "";
         email = "teacher@amce.local";
         user_groups = "teacher";
@@ -163,7 +161,7 @@ public class DBManagerTesting {
     @Test
     @Order(6)
     public void testGetDecryptionKeyOwner() throws Exception  {
-        path = "test17.txt";
+        path = "test31.txt";
         file_hash = "";
         email = "user@amce.local";
         user_groups = "user";
@@ -193,7 +191,7 @@ public class DBManagerTesting {
     @Test
 	@Order(7)
     public void testGetDecryptionKeyAuthorizedWriteUser() throws Exception  {
-        path = "test17.txt";
+        path = "test31.txt";
         file_hash = "";
         email = "student@amce.local";
         user_groups = "hr";
@@ -223,7 +221,7 @@ public class DBManagerTesting {
     @Test
 	@Order(8)
     public void testGetDecryptionKeyAuthorizedReadUser() throws Exception  {
-        path = "test17.txt";
+        path = "test31.txt";
         file_hash = "";
         email = "student@amce.local";
         user_groups = "students";
@@ -253,7 +251,7 @@ public class DBManagerTesting {
     @Test
 	@Order(9)
     public void testGetDecryptionKeyUnauthorizedUser() throws Exception  {
-        path = "test17.txt";
+        path = "test31.txt";
         file_hash = "";
         email = "teacher@amce.local";
         user_groups = "teacher";
@@ -279,7 +277,7 @@ public class DBManagerTesting {
     @Test
 	@Order(10)
     public void testGetDecryptionKeyCorruptedFile() throws Exception  {
-        path = "test17.txt";
+        path = "test31.txt";
         file_hash = "WrongHash";
         email = "teacher@amce.local";
         user_groups = "teacher";
@@ -347,7 +345,7 @@ public class DBManagerTesting {
     @Test
 	@Order(13)
     public void testSaveFile() throws Exception  {
-        path = "test17.txt";
+        path = "test31.txt";
         file_hash = "newFileHash";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
         url = "https://localhost:%d/api/v1".formatted(port)+"/saveFile?" +
@@ -405,7 +403,7 @@ public class DBManagerTesting {
     @Test
 	@Order(16)
     public void testDeleteFile() throws Exception  {
-        path = "test19.txt";
+        path = "test33.txt";
         email = "user@amce.local";
         r_groups = "hr,students";
         rw_groups = "hr";
@@ -440,9 +438,9 @@ public class DBManagerTesting {
     }
 
     @Test
-	@Order(17)
+	@Order(31)
     public void testDeleteNotExistingFile() throws Exception  {
-        path = "test18.txt";
+        path = "test32.txt";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
         url = "https://localhost:%d/api/v1".formatted(port)+"/deleteFile?" +
             "path_hash=" + path_hash;
@@ -460,7 +458,7 @@ public class DBManagerTesting {
     }
 
     @Test
-	@Order(18)
+	@Order(32)
     public void testDeleteFileBadRequest() throws Exception  {
         url = "https://localhost:%d/api/v1".formatted(port)+"/deleteFile";
 
