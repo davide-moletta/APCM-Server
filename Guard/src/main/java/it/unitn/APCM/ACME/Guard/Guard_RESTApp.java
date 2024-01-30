@@ -18,14 +18,14 @@ public class Guard_RESTApp {
 	private static final Logger log = LoggerFactory.getLogger(Guard_RESTApp.class);
 
 	/**
-	 * The Srvdb.
+	 * The string rapresenting the FQDM:port of DBManager.
 	 */
 	static public String srvdb = null;
 
 	/**
 	 * The entry point of application.
 	 *
-	 * @param args the input arguments which are specified in the launch.json file
+	 * @param args the input arguments
 	 */
 	public static void main(String[] args) {
 		SpringApplication app = new SpringApplication(Guard_RESTApp.class);

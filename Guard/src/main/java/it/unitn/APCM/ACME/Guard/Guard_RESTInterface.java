@@ -230,7 +230,7 @@ public class Guard_RESTInterface {
 	public ResponseEntity<String> login(@RequestBody String credentials) {
 		// Set up the response header and status
 		HttpHeaders headers = new HttpHeaders();
-		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+		HttpStatus status = HttpStatus.UNAUTHORIZED;
 		String response = "error";
 
 		String email = null, password = null;
@@ -268,26 +268,29 @@ public class Guard_RESTInterface {
 			throw new RuntimeException(e);
 		}
 
-		assert stored_password != null;
-		// Check if the password is valid with argon2
-		Argon2PasswordEncoder encoder = new Argon2PasswordEncoder(32, 64, 1, 32 * 1024, 2);
+		if (stored_password != null) {
+			// Check if the password is valid with argon2
+			Argon2PasswordEncoder encoder = new Argon2PasswordEncoder(32, 64, 1, 32 * 1024, 2);
 
-		if (encoder.matches(password, stored_password)) {
-			// Password is valid, create the JWT token
-			// Get the user privilege
-			UserPrivilege userPrivilege = getUserPrivilege(email);
-			User user = new User(email, userPrivilege.getGroups(), userPrivilege.getAdmin());
-			// Create the JWT token with the user data
-			final String jwt = JWT_Utils.generateToken(user);
+			if (encoder.matches(password, stored_password)) {
+				// Password is valid, create the JWT token
+				// Get the user privilege
+				UserPrivilege userPrivilege = getUserPrivilege(email);
+				User user = new User(email, userPrivilege.getGroups(), userPrivilege.getAdmin());
+				// Create the JWT token with the user data
+				final String jwt = JWT_Utils.generateToken(user);
 
-			// Set the response header and status
-			response = "success";
-			status = HttpStatus.OK;
-			headers.add("jwt", jwt);
+				// Set the response header and status
+				response = "success";
+				status = HttpStatus.OK;
+				headers.add("jwt", jwt);
+			} else {
+				// Password is not valid, return unauthorized
+				response = "error";
+				status = HttpStatus.UNAUTHORIZED;
+			}
 		} else {
-			// Password is not valid, return unauthorized
-			response = "error";
-			status = HttpStatus.UNAUTHORIZED;
+			// User not existing => Default Unauthorized
 		}
 
 		return new ResponseEntity<>(response, headers, status);

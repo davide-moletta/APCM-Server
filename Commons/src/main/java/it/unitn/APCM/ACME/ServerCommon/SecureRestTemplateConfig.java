@@ -90,9 +90,9 @@ public class SecureRestTemplateConfig {
 	}
 
 	/**
-	 * Secure rest template rest template.
+	 * Secure rest template.
 	 *
-	 * @return the rest template
+	 * @return the Secure version of REST template
 	 */
 	@Bean
 	public RestTemplate secureRestTemplate() {
