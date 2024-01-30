@@ -1,10 +1,12 @@
 package it.unitn.APCM.ACME.DBManager;
 
 import org.junit.jupiter.api.Assertions;
+//import org.junit.jupiter.api.Test;
+import org.junit.Test;
+
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpMethod;
@@ -20,9 +22,15 @@ import it.unitn.APCM.ACME.ServerCommon.Response;
 import it.unitn.APCM.ACME.ServerCommon.SecureRestTemplateConfig;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest
-@TestMethodOrder(OrderAnnotation.class)
-public class DBManagerTesting {  
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@SpringBootTest(
+        classes = DB_RESTApp.class,
+        args = {""},
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        useMainMethod = SpringBootTest.UseMainMethod.ALWAYS
+)
+public class DBManagerTesting {
+
     @LocalServerPort
     private int port;
     RestTemplate rest = (new SecureRestTemplateConfig("Guard_keystore.jks", "GuardC_truststore.jks")).secureRestTemplate();
@@ -36,7 +44,7 @@ public class DBManagerTesting {
         r_groups = "hr,students";
         rw_groups = "hr";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
-        url = "https://localhost:8091/api/v1/newFile?" + 
+        url = "https://localhost:%d/api/v1".formatted(port)+"/newFile?" +
             "path_hash=" + path_hash +
             "&path=" + path +
             "&email=" + email +
@@ -62,7 +70,7 @@ public class DBManagerTesting {
         r_groups = "hr,students";
         rw_groups = "hr";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
-        url = "https://localhost:8091/api/v1/newFile?" + 
+        url = "https://localhost:%d/api/v1".formatted(port)+"/newFile?" +
             "path_hash=" + path_hash +
             "&path=" + path +
             "&email=" + email +
@@ -88,8 +96,8 @@ public class DBManagerTesting {
         r_groups = "hr,students";
         rw_groups = "hr";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
-        url = "https://localhost:8091/api/v1/newFile?" + 
-            "path_hash=" + path_hash +
+        url = "https://localhost:%d/api/v1".formatted(port)+"/newFile?" +
+                "path_hash=" + path_hash +
             "&path=" + path +
             "&email=" + email +
             "&r_groups=" + r_groups +
@@ -109,7 +117,7 @@ public class DBManagerTesting {
     @Test
     @Order(4)
     public void testCreateFileBadRequest() throws Exception  {
-        url = "https://localhost:8091/api/v1/newFile";
+        url = "https://localhost:%d/api/v1".formatted(port)+"/newFile?";
 
         ResponseEntity<String> res = null;
 
@@ -130,7 +138,7 @@ public class DBManagerTesting {
         email = "teacher@amce.local";
         user_groups = "teacher";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
-        url = "https://localhost:8091/api/v1/decryption_key?" + 
+        url = "https://localhost:%d/api/v1".formatted(port)+"/decryption_key?" +
             "path_hash=" + path_hash +
             "&file_hash=" + file_hash +
             "&email=" + email +
@@ -160,7 +168,7 @@ public class DBManagerTesting {
         email = "user@amce.local";
         user_groups = "user";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
-        url = "https://localhost:8091/api/v1/decryption_key?" + 
+        url = "https://localhost:%d/api/v1".formatted(port)+"/decryption_key?" +
             "path_hash=" + path_hash +
             "&file_hash=" + file_hash +
             "&email=" + email +
@@ -183,14 +191,14 @@ public class DBManagerTesting {
     }
 
     @Test
-    @Order(7)
+	@Order(7)
     public void testGetDecryptionKeyAuthorizedWriteUser() throws Exception  {
         path = "test17.txt";
         file_hash = "";
         email = "student@amce.local";
         user_groups = "hr";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
-        url = "https://localhost:8091/api/v1/decryption_key?" + 
+        url = "https://localhost:%d/api/v1".formatted(port)+"/decryption_key?" +
             "path_hash=" + path_hash +
             "&file_hash=" + file_hash +
             "&email=" + email +
@@ -198,13 +206,13 @@ public class DBManagerTesting {
 			"&admin=" + 0;
 
         ResponseEntity<Response> res = null;
-        
+
         try{
             res = rest.getForEntity(url, Response.class);
         } catch (HttpClientErrorException e){
             res = new ResponseEntity<>(e.getStatusCode());
         }
-            
+
         Assertions.assertEquals(200, res.getStatusCode().value());
         //Check if he can read
         Assertions.assertEquals(true, res.getBody().get_auth());
@@ -213,14 +221,14 @@ public class DBManagerTesting {
     }
 
     @Test
-    @Order(8)
+	@Order(8)
     public void testGetDecryptionKeyAuthorizedReadUser() throws Exception  {
         path = "test17.txt";
         file_hash = "";
         email = "student@amce.local";
         user_groups = "students";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
-        url = "https://localhost:8091/api/v1/decryption_key?" + 
+        url = "https://localhost:%d/api/v1".formatted(port)+"/decryption_key?" +
             "path_hash=" + path_hash +
             "&file_hash=" + file_hash +
             "&email=" + email +
@@ -228,13 +236,13 @@ public class DBManagerTesting {
 			"&admin=" + 0;
 
         ResponseEntity<Response> res = null;
-        
+
         try{
             res = rest.getForEntity(url, Response.class);
         } catch (HttpClientErrorException e){
             res = new ResponseEntity<>(e.getStatusCode());
         }
-            
+
         Assertions.assertEquals(200, res.getStatusCode().value());
         //Check if he can read
         Assertions.assertEquals(true, res.getBody().get_auth());
@@ -243,14 +251,14 @@ public class DBManagerTesting {
     }
 
     @Test
-    @Order(9)
+	@Order(9)
     public void testGetDecryptionKeyUnauthorizedUser() throws Exception  {
         path = "test17.txt";
         file_hash = "";
         email = "teacher@amce.local";
         user_groups = "teacher";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
-        url = "https://localhost:8091/api/v1/decryption_key?" + 
+        url = "https://localhost:%d/api/v1".formatted(port)+"/decryption_key?" +
             "path_hash=" + path_hash +
             "&file_hash=" + file_hash +
             "&email=" + email +
@@ -258,25 +266,25 @@ public class DBManagerTesting {
 			"&admin=" + 0;
 
         ResponseEntity<Response> res = null;
-        
+
         try{
             res = rest.getForEntity(url, Response.class);
         } catch (HttpClientErrorException e){
             res = new ResponseEntity<>(e.getStatusCode());
         }
-            
+
         Assertions.assertEquals(401, res.getStatusCode().value());
-    } 
+    }
 
     @Test
-    @Order(10)
+	@Order(10)
     public void testGetDecryptionKeyCorruptedFile() throws Exception  {
         path = "test17.txt";
         file_hash = "WrongHash";
         email = "teacher@amce.local";
         user_groups = "teacher";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
-        url = "https://localhost:8091/api/v1/decryption_key?" + 
+        url = "https://localhost:%d/api/v1".formatted(port)+"/decryption_key?" +
             "path_hash=" + path_hash +
             "&file_hash=" + file_hash +
             "&email=" + email +
@@ -284,25 +292,25 @@ public class DBManagerTesting {
 			"&admin=" + 1;
 
         ResponseEntity<Response> res = null;
-        
+
         try{
             res = rest.getForEntity(url, Response.class);
         } catch (HttpClientErrorException e){
             res = new ResponseEntity<>(e.getStatusCode());
         }
-            
+
         Assertions.assertEquals(409, res.getStatusCode().value());
     }
 
     @Test
-    @Order(11)
+	@Order(11)
     public void testGetDecryptionKeyWrongPathHash() throws Exception  {
         path = "NotExistingPath.txt";
         file_hash = "";
         email = "teacher@amce.local";
         user_groups = "teacher";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
-        url = "https://localhost:8091/api/v1/decryption_key?" + 
+        url = "https://localhost:%d/api/v1".formatted(port)+"/decryption_key?" +
             "path_hash=" + path_hash +
             "&file_hash=" + file_hash +
             "&email=" + email +
@@ -310,141 +318,160 @@ public class DBManagerTesting {
 			"&admin=" + 1;
 
         ResponseEntity<Response> res = null;
-        
+
         try{
             res = rest.getForEntity(url, Response.class);
         } catch (HttpClientErrorException | HttpServerErrorException e){
             res = new ResponseEntity<>(e.getStatusCode());
         }
-            
+
         Assertions.assertEquals(500, res.getStatusCode().value());
     }
 
     @Test
-    @Order(12)
+	@Order(12)
     public void testGetDecryptionKeyBadRequest() throws Exception  {
-        url = "https://localhost:8091/api/v1/decryption_key";
+        url = "https://localhost:%d/api/v1".formatted(port)+"/decryption_key";
 
         ResponseEntity<Response> res = null;
-        
+
         try{
             res = rest.getForEntity(url, Response.class);
         } catch (HttpClientErrorException | HttpServerErrorException e){
             res = new ResponseEntity<>(e.getStatusCode());
         }
-            
+
         Assertions.assertEquals(400, res.getStatusCode().value());
     }
 
     @Test
-    @Order(13)
+	@Order(13)
     public void testSaveFile() throws Exception  {
         path = "test17.txt";
         file_hash = "newFileHash";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
-        url = "https://localhost:8091/api/v1/saveFile?" + 
+        url = "https://localhost:%d/api/v1".formatted(port)+"/saveFile?" +
             "path_hash=" + path_hash +
             "&file_hash=" + file_hash;
 
         ResponseEntity<String> res = null;
-        
+
         try{
             res = rest.postForEntity(url, null, String.class);
         } catch (HttpClientErrorException e){
             res = new ResponseEntity<>(e.getStatusCode());
         }
-            
+
         Assertions.assertEquals(200, res.getStatusCode().value());
     }
 
     @Test
-    @Order(14)
+	@Order(14)
     public void testSaveFileWrongPathHash() throws Exception  {
         path = "ThisIsNotAnExistingPath.txt";
         file_hash = "newFileHash";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
-        url = "https://localhost:8091/api/v1/saveFile?" + 
+        url = "https://localhost:%d/api/v1".formatted(port)+"/saveFile?" +
             "path_hash=" + path_hash +
             "&file_hash=" + file_hash;
 
         ResponseEntity<String> res = null;
-        
+
         try{
             res = rest.postForEntity(url, null, String.class);
         } catch (HttpClientErrorException | HttpServerErrorException e){
             res = new ResponseEntity<>(e.getStatusCode());
         }
-            
+
         Assertions.assertEquals(500, res.getStatusCode().value());
     }
 
     @Test
-    @Order(15)
+	@Order(15)
     public void testSaveFileBadRequest() throws Exception  {
-        url = "https://localhost:8091/api/v1/saveFile?";
+        url = "https://localhost:%d/api/v1".formatted(port)+"/saveFile";
 
         ResponseEntity<String> res = null;
-        
+
         try{
             res = rest.postForEntity(url, null, String.class);
         } catch (HttpClientErrorException | HttpServerErrorException e){
             res = new ResponseEntity<>(e.getStatusCode());
         }
-            
+
         Assertions.assertEquals(400, res.getStatusCode().value());
     }
 
     @Test
-    @Order(16)
+	@Order(16)
     public void testDeleteFile() throws Exception  {
-       
+        path = "test19.txt";
+        email = "user@amce.local";
+        r_groups = "hr,students";
+        rw_groups = "hr";
+        path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
+        url = "https://localhost:%d/api/v1".formatted(port)+"/newFile?" +
+            "path_hash=" + path_hash +
+            "&path=" + path +
+            "&email=" + email +
+            "&r_groups=" + r_groups +
+			"&rw_groups=" + rw_groups;
+
         ResponseEntity<String> res = null;
-        
-        url = "https://localhost:8091/api/v1/deleteFile?" + 
+
+        try{
+            res = rest.postForEntity(url, null, String.class);
+        } catch (HttpClientErrorException e){
+            res = new ResponseEntity<>(e.getStatusCode());
+        }
+
+        url = "https://localhost:%d/api/v1".formatted(port)+"/deleteFile?" +
             "path_hash=" + path_hash;
+
+        res = null;
 
         try{
             res = rest.exchange(url, HttpMethod.DELETE, null, String.class);
         } catch (HttpClientErrorException | HttpServerErrorException e){
             res = new ResponseEntity<>(e.getStatusCode());
         }
-            
+
         Assertions.assertEquals(200, res.getStatusCode().value());
     }
 
     @Test
-    @Order(17)
+	@Order(17)
     public void testDeleteNotExistingFile() throws Exception  {
         path = "test18.txt";
         path_hash = (new CryptographyPrimitive()).getHash(path.getBytes());
-        url = "https://localhost:8091/api/v1/deleteFile?" + 
+        url = "https://localhost:%d/api/v1".formatted(port)+"/deleteFile?" +
             "path_hash=" + path_hash;
 
         ResponseEntity<String> res = null;
-        
-        
+
+
         try{
             res = rest.exchange(url, HttpMethod.DELETE, null, String.class);
         } catch (HttpClientErrorException | HttpServerErrorException e){
             res = new ResponseEntity<>(e.getStatusCode());
         }
-            
+
         Assertions.assertEquals(500, res.getStatusCode().value());
     }
 
     @Test
-    @Order(18)
+	@Order(18)
     public void testDeleteFileBadRequest() throws Exception  {
-        url = "https://localhost:8091/api/v1/deleteFile";
+        url = "https://localhost:%d/api/v1".formatted(port)+"/deleteFile";
 
         ResponseEntity<String> res = null;
-        
+
         try{
             res = rest.exchange(url, HttpMethod.DELETE, null, String.class);
         } catch (HttpClientErrorException | HttpServerErrorException e){
             res = new ResponseEntity<>(e.getStatusCode());
         }
-            
+
         Assertions.assertEquals(400, res.getStatusCode().value());
     }
 }
