@@ -76,7 +76,7 @@ public class Guard_RESTInterface {
 	/**
 	 * The constant File path.
 	 */
-	private static final String fP = URI.create("Guard/src/main/java/it/unitn/APCM/ACME/Guard/Files/").toString();
+	private static final String fP = URI.create(System.getProperty("java.io.tmpdir").replace("C:", "").replace("\\", "/").concat("Files/")).toString();
 	/**
 	 * The constant encryption algorithm.
 	 */
@@ -104,7 +104,7 @@ public class Guard_RESTInterface {
 		File directoryPath = new File(path.getPath());
 
 		ArrayList<String> files_list = new ArrayList<>();
-
+		
 		if (directoryPath.exists() && directoryPath.isDirectory()) {
 			// If the directory exists get the content
 			File[] contents = directoryPath.listFiles();
@@ -146,7 +146,6 @@ public class Guard_RESTInterface {
 		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 
 		ArrayList<String> files_list = new ArrayList<>();
-
 		// Validate the JWT token
 		if (JWT_Utils.validateToken(jwt, email)) {
 			// Token is valid, retrieve the files

@@ -25,6 +25,13 @@
         </dependency>
 
         <dependency>
+            <groupId>it.unitn.APCM.ACME</groupId>
+            <artifactId>DBManager</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>0.12.3</version>
