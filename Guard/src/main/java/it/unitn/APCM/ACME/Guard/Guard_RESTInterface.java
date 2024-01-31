@@ -394,8 +394,10 @@ public class Guard_RESTInterface {
 				if (e instanceof HttpClientErrorException && ((HttpClientErrorException) e).getStatusCode() == HttpStatus.UNAUTHORIZED) {
 					status = HttpStatus.FORBIDDEN;
 					log.error("Unauthorized user to access the file:"+file_hash);
-				}
-				else {
+				} else if (e instanceof HttpClientErrorException && ((HttpClientErrorException) e).getStatusCode() == HttpStatus.PRECONDITION_FAILED) {
+					status = HttpStatus.PRECONDITION_FAILED;
+					log.error("Corrupted file: "+path);
+				} else {
 					log.error("Error in the response from DB server");
 				}
 			}
@@ -458,7 +460,7 @@ public class Guard_RESTInterface {
 			try {
 				// get the response and decide accordingly
 				Response res = srt.getForEntity(DB_request_url, Response.class).getBody();
-
+				
 				if (res != null) {
 					// Check if the user is authorized to write the file
 					if (res.get_w_mode() && !newTextToSave.isEmpty()) {
@@ -483,7 +485,6 @@ public class Guard_RESTInterface {
 								+ "&file_hash=" + (new CryptographyPrimitive()).getHash(textEnc);
 
 						log.trace("Requesting for: " + DB_request2_url);
-
 						// sends the request and capture the response
 						String res2 = srt.postForEntity(DB_request2_url, null, String.class).getBody();
 						assert res2 != null;
@@ -492,6 +493,9 @@ public class Guard_RESTInterface {
 							status = HttpStatus.CREATED;
 							response = "success";
 						}
+					} else {
+						status = HttpStatus.FORBIDDEN;
+						log.error("Unauthorized user to save the file: "+path);
 					}
 				}
 			} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
@@ -499,8 +503,10 @@ public class Guard_RESTInterface {
 				if (e instanceof HttpClientErrorException && ((HttpClientErrorException) e).getStatusCode() == HttpStatus.UNAUTHORIZED) {
 					status = HttpStatus.FORBIDDEN;
 					log.error("Unauthorized user to save the file: "+path);
-				}
-				else {
+				} else if (e instanceof HttpClientErrorException && ((HttpClientErrorException) e).getStatusCode() == HttpStatus.PRECONDITION_FAILED) {
+					status = HttpStatus.PRECONDITION_FAILED;
+					log.error("Corrupted file: "+path);
+				} else {
 					log.error("Error in the response from DB server");
 				}
 			}
@@ -668,8 +674,10 @@ public class Guard_RESTInterface {
 				if (e instanceof HttpClientErrorException && ((HttpClientErrorException) e).getStatusCode() == HttpStatus.UNAUTHORIZED) {
 					status = HttpStatus.FORBIDDEN;
 					log.error("Unauthorized user to delete the file: "+path);
-				}
-				else {
+				}else if (e instanceof HttpClientErrorException && ((HttpClientErrorException) e).getStatusCode() == HttpStatus.PRECONDITION_FAILED) {
+					status = HttpStatus.PRECONDITION_FAILED;
+					log.error("Corrupted file: "+path);
+				} else {
 					log.error("Error in the response from DB server");
 				}
 			}
@@ -755,8 +763,11 @@ public class Guard_RESTInterface {
 							}
 						}
 					}
+				} else {
+					status = HttpStatus.FORBIDDEN;
+					log.error("Unauthorized user to delete the file: "+path);
 				}
-			}
+			} 
 		} else {
 			// Token is not valid, return unauthorized
 			log.error("Unauthorized user");

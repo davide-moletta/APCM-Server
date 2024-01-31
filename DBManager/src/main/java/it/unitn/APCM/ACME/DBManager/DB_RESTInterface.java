@@ -69,7 +69,6 @@ public class DB_RESTInterface {
 			ps = conn.prepareStatement(getInfoQuery);
 			ps.setString(1, path_hash);
 			ResultSet rs = ps.executeQuery();
-
 			while (rs.next()) {
 				// Check if there are more than one result
 				if (rs.isFirst()) {
@@ -78,7 +77,7 @@ public class DB_RESTInterface {
 						// Get the encryption key
 						byte[] encryptionKey = null;
 						encryptionKey = (rs.getBytes("encryption_key"));
-
+						
 						// Check if the user is authorized to access the file
 						if (admin.equals("1") || rs.getString("owner").equals(email)) {
 							log.trace("User is an admin or the owner of the file");
@@ -87,7 +86,7 @@ public class DB_RESTInterface {
 						} else {
 							ArrayList<String> rw_groups = new JSONToArray(rs.getString("rw_groups"));
 							ArrayList<String> r_groups = new JSONToArray(rs.getString("r_groups"));
-
+							
 							// If user is neither admin nor owner check the groups
 							for (String g : user_groups) {
 								// Check if the user is in the rw_groups or only in the r groups
@@ -114,7 +113,7 @@ public class DB_RESTInterface {
 						}
 					} else {
 						log.error("File corrupted");
-						throw new ResponseStatusException(HttpStatus.CONFLICT, "File corrupted");
+						throw new ResponseStatusException(HttpStatus.PRECONDITION_FAILED, "File corrupted");
 					}
 				} else {
 					// more than one result
