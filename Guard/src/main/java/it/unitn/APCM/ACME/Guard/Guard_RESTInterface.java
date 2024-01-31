@@ -391,7 +391,13 @@ public class Guard_RESTInterface {
 				}
 			} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
 				clientResponse = null;
-				log.error("Error in the response from DB server");
+				if (e instanceof HttpClientErrorException && ((HttpClientErrorException) e).getStatusCode() == HttpStatus.UNAUTHORIZED) {
+					status = HttpStatus.FORBIDDEN;
+					log.error("Unauthorized user to access the file:"+file_hash);
+				}
+				else {
+					log.error("Error in the response from DB server");
+				}
 			}
 		} else {
 			// Token is not valid, return unauthorized
@@ -489,7 +495,14 @@ public class Guard_RESTInterface {
 					}
 				}
 			} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
-				log.error("Error in the response from DB server");
+
+				if (e instanceof HttpClientErrorException && ((HttpClientErrorException) e).getStatusCode() == HttpStatus.UNAUTHORIZED) {
+					status = HttpStatus.FORBIDDEN;
+					log.error("Unauthorized user to save the file: "+path);
+				}
+				else {
+					log.error("Error in the response from DB server");
+				}
 			}
 		} else {
 			// Token is not valid, return unauthorized
@@ -652,7 +665,13 @@ public class Guard_RESTInterface {
 				// get the response and decide accordingly
 				res = srt.getForEntity(DB_request_url, Response.class).getBody();
 			} catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
-				log.error("Error in the response from DB server");
+				if (e instanceof HttpClientErrorException && ((HttpClientErrorException) e).getStatusCode() == HttpStatus.UNAUTHORIZED) {
+					status = HttpStatus.FORBIDDEN;
+					log.error("Unauthorized user to delete the file: "+path);
+				}
+				else {
+					log.error("Error in the response from DB server");
+				}
 			}
 
 			if (res != null) {
