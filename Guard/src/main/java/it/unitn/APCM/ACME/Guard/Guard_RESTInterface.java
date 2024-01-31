@@ -76,7 +76,7 @@ public class Guard_RESTInterface {
 	/**
 	 * The constant File path.
 	 */
-	private static final String fP = URI.create(System.getProperty("java.io.tmpdir").replace("C:", "").replace("\\", "/").concat("Files/")).toString();
+	private static final String fP = URI.create(System.getenv("FILE_DIRECTORY")).toString();
 	/**
 	 * The constant encryption algorithm.
 	 */
