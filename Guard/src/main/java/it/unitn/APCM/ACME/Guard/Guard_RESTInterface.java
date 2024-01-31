@@ -172,6 +172,7 @@ public class Guard_RESTInterface {
 		return new ResponseEntity<>(response, headers, status);
 	}
 
+	/*
 	/**
 	 * Endpoint to create a new user
 	 *
@@ -181,7 +182,8 @@ public class Guard_RESTInterface {
 	 * @param admin    the admin
 	 * @return the response entity
 	 */
-	@GetMapping("/newUser")
+	/*
+	@PostMapping("/newUser")
 	public ResponseEntity<String> createUser(@RequestParam String email, @RequestParam String password,
 			@RequestParam String groups, @RequestParam int admin) {
 
@@ -218,6 +220,7 @@ public class Guard_RESTInterface {
 
 		return new ResponseEntity<>(response, new HttpHeaders(), status);
 	}
+	*/
 
 	/**
 	 * Endpoint to login
