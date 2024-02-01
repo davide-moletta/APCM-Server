@@ -291,7 +291,7 @@ public class DBManagerTesting {
             res = new ResponseEntity<>(e.getStatusCode());
         }
 
-        Assertions.assertEquals(409, res.getStatusCode().value());
+        Assertions.assertEquals(412, res.getStatusCode().value());
     }
 
     @Test
