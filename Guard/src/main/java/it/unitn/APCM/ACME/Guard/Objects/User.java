@@ -31,21 +31,21 @@ public class User {
     }
 
 	/**
-	 * Gets email.
+	 * Gets email of the user
 	 *
 	 * @return the email
 	 */
 	public String getEmail() { return email; }
 
 	/**
-	 * Gets groups.
+	 * Gets groups fo the user
 	 *
 	 * @return the groups
 	 */
 	public String getGroups() { return groups; }
 
 	/**
-	 * Gets admin.
+	 * Gets the admin value of the user
 	 *
 	 * @return the admin
 	 */

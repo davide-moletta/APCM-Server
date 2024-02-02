@@ -28,7 +28,7 @@ public class JWT_Utils {
 	 */
 	private static final Logger log = LoggerFactory.getLogger(Guard_RESTInterface.class);
 	/**
-	 * Secret key to encrypt and decrypt the token.
+	 * Secret key to encrypt and decrypt the JWT token.
 	 */
 	private static final SecretKey SECRET_KEY = Keys
             .hmacShaKeyFor((new CryptographyPrimitive().getSymmetricKey()).getEncoded());
@@ -38,9 +38,9 @@ public class JWT_Utils {
 	private static final int EXP_TIME = 1000 * 60 * 30 * 1;
 
 	/**
-	 * Extract username string from the token.
+	 * Extract username string from the JWT token.
 	 *
-	 * @param token the token
+	 * @param token the JWT token
 	 * @return the string
 	 */
 	public String extractUsername(String token) {
@@ -50,7 +50,7 @@ public class JWT_Utils {
 	/**
 	 * Extract expiration date from the token.
 	 *
-	 * @param token the token
+	 * @param token the JWT token
 	 * @return the date
 	 */
 	public Date extractDate(String token) {
@@ -61,9 +61,9 @@ public class JWT_Utils {
 	 * Extract claim t.
 	 *
 	 * @param <T>            the type parameter
-	 * @param token          the token
+	 * @param token          the JWT token
 	 * @param claimsResolver the claims resolver
-	 * @return the t
+	 * @return the claimsResolver with applied claims extracted from the JWT token
 	 */
 	public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
@@ -73,7 +73,7 @@ public class JWT_Utils {
 	/**
 	 * Extract the groups of the user from the token.
 	 *
-	 * @param token the token
+	 * @param token the JWT token
 	 * @return the string
 	 */
 	public String extractGroups(String token) {
@@ -84,7 +84,7 @@ public class JWT_Utils {
 	/**
 	 * Extract the admin of the user from the token.
 	 *
-	 * @param token the token
+	 * @param token the JWT token
 	 * @return the int
 	 */
 	public int extractAdmin(String token) {
@@ -95,7 +95,7 @@ public class JWT_Utils {
 	/**
 	 * Extract all claims from the token.
 	 *
-	 * @param token the token
+	 * @param token the JWT token
 	 * @return the claims
 	 */
 	private Claims extractAllClaims(String token) {
@@ -108,7 +108,7 @@ public class JWT_Utils {
 	/**
 	 * Check if the token is expired.
 	 *
-	 * @param token the token
+	 * @param token the JWT token
 	 * @return the boolean
 	 */
 	private Boolean isTokenExpired(String token) {

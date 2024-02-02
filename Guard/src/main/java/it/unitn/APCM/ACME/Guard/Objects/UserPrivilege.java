@@ -25,16 +25,16 @@ public class UserPrivilege {
     }
 
 	/**
-	 * Get admin int.
+	 * Get admin value
 	 *
-	 * @return the int
+	 * @return the int representing the admin privilege value
 	 */
 	public int getAdmin(){ return this.admin; }
 
 	/**
 	 * Get groups string.
 	 *
-	 * @return the string
+	 * @return the string representing the group privilege value
 	 */
 	public String getGroups(){ return this.groups; }
 }

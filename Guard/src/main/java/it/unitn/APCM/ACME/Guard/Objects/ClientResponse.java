@@ -13,11 +13,11 @@ public class ClientResponse {
 	 */
 	boolean auth;
 	/**
-	 * The W mode, set to true if the client is authorized to write on the file.
+	 * The Write mode, set to true if the client is authorized to write on the file.
 	 */
 	boolean w_mode;
 	/**
-	 * The Text of the file.
+	 * The Text of the client response.
 	 */
 	String text;
 
@@ -44,21 +44,21 @@ public class ClientResponse {
 	public void set_path(String path) { this.path = path; }
 
 	/**
-	 * Sets auth.
+	 * Sets authentication of the user.
 	 *
 	 * @param auth the auth
 	 */
 	public void set_auth(boolean auth) { this.auth = auth; }
 
 	/**
-	 * Sets text.
+	 * Sets text of the response.
 	 *
 	 * @param text the text
 	 */
 	public void set_text(String text) { this.text = text; }
 
 	/**
-	 * Sets w mode.
+	 * Sets write mode.
 	 *
 	 * @param w_mode the w mode
 	 */
@@ -72,21 +72,21 @@ public class ClientResponse {
 	public String get_path() { return this.path; }
 
 	/**
-	 * Gets auth.
+	 * Gets authentication of the user.
 	 *
 	 * @return the auth
 	 */
 	public boolean get_auth() { return this.auth; }
 
 	/**
-	 * Gets text.
+	 * Gets text fo the response.
 	 *
 	 * @return the text
 	 */
 	public String get_text() { return this.text; }
 
 	/**
-	 * Gets w mode.
+	 * Gets write mode.
 	 *
 	 * @return the w mode
 	 */
