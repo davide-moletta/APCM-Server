@@ -8,11 +8,11 @@ import java.sql.Connection;
 
 /**
  * The type Guard connection.
- * Used to connect to the sqlite database of users
+ * Used to connect to the SQLite database of users
  */
 public class Guard_Connection {
 	/**
-	 * The constant JDBC connection.
+	 * The constant JDBC connection initialized with the ENV var 'DB_GUARD'.
 	 */
 	private static final JDBC_Connection dbconn = new JDBC_Connection(System.getenv("DB_GUARD"));
 	/**
@@ -23,7 +23,7 @@ public class Guard_Connection {
 	/**
 	 * Gets dbconn.
 	 *
-	 * @return the dbconn
+	 * @return the connection to the database file
 	 */
 	public static Connection getDbconn() {
 		log.trace("Connection to db_users requested");

@@ -18,19 +18,22 @@ import java.security.*;
 import java.security.cert.CertificateException;
 
 /**
- * The type Secure rest template config.
+ * The class responsible to create a secure template for the REST communication
  */
 @Component
 public class SecureRestTemplateConfig {
 
 	/**
-	 * The constant sslContext.
+	 * The constant sslContext upon which the HTTP connection can be built
 	 */
 	private static SSLContext sslContext = null;
 
 	/**
-	 * Instantiates a new Secure rest template config that works with mTLS for
-	 * secure connections.
+	 * Instantiates a new Secure REST template config that works with mTLS for
+	 * secure connections using the stores provided.
+	 *
+	 * @param keyStoreName the key-store filename
+	 * @param keyTrustname the key-trust filename
 	 */
 	public SecureRestTemplateConfig(String keyStoreName, String keyTrustname) {
 		if (sslContext == null) {
@@ -90,9 +93,9 @@ public class SecureRestTemplateConfig {
 	}
 
 	/**
-	 * Secure rest template.
+	 * Secure REST template.
 	 *
-	 * @return the Secure version of REST template
+	 * @return the Secure version of REST template based on the SSLContext defined in the constructor
 	 */
 	@Bean
 	public RestTemplate secureRestTemplate() {

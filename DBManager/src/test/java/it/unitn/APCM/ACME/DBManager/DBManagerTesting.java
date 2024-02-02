@@ -20,15 +20,53 @@ import it.unitn.APCM.ACME.ServerCommon.CryptographyPrimitive;
 import it.unitn.APCM.ACME.ServerCommon.Response;
 import it.unitn.APCM.ACME.ServerCommon.SecureRestTemplateConfig;
 
+/**
+ * The type Db manager testing.
+ */
 @RunWith(SpringRunner.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
 public class DBManagerTesting {
-    String fixedUrl = "https://localhost:50880/api/v1/";
-    RestTemplate rest = (new SecureRestTemplateConfig("Guard_keystore.jks", "GuardC_truststore.jks")).secureRestTemplate();
-    String path, email, r_groups, rw_groups, user_groups, path_hash, file_hash, url = "";
+	/**
+	 * The Fixed url for the DBManager in testing mode.
+	 */
+	String fixedUrl = "https://localhost:50880/api/v1/";
+	/**
+	 * The Rest.
+	 */
+	RestTemplate rest = (new SecureRestTemplateConfig("Guard_keystore.jks", "GuardC_truststore.jks")).secureRestTemplate();
+	/**
+	 * The Path.
+	 */
+	String path, /**
+	 * The Email.
+	 */
+	email, /**
+	 * The R groups.
+	 */
+	r_groups, /**
+	 * The Rw groups.
+	 */
+	rw_groups, /**
+	 * The User groups.
+	 */
+	user_groups, /**
+	 * The Path hash.
+	 */
+	path_hash, /**
+	 * The File hash.
+	 */
+	file_hash, /**
+	 * The Url.
+	 */
+	url = "";
 
-    @Test
+	/**
+	 * Test create first file.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
     @Order(1)
     public void testCreateFirstFile() throws Exception  {
         path = "test1.txt";
@@ -54,7 +92,12 @@ public class DBManagerTesting {
         Assertions.assertEquals(201, res.getStatusCode().value());
     }
 
-    @Test
+	/**
+	 * Test create second file.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
     @Order(2)
     public void testCreateSecondFile() throws Exception  {
         path = "test2.txt";
@@ -80,7 +123,12 @@ public class DBManagerTesting {
         Assertions.assertEquals(201, res.getStatusCode().value());
     }
 
-    @Test
+	/**
+	 * Test create file already existing.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
     @Order(3)
     public void testCreateFileAlreadyExisting() throws Exception  {
         path = "test1.txt";
@@ -106,7 +154,12 @@ public class DBManagerTesting {
         Assertions.assertEquals(409, res.getStatusCode().value());
     }
 
-    @Test
+	/**
+	 * Test create file bad request.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
     @Order(4)
     public void testCreateFileBadRequest() throws Exception  {
         url = fixedUrl + "newFile?";
@@ -122,7 +175,12 @@ public class DBManagerTesting {
         Assertions.assertEquals(400, res.getStatusCode().value());
     }
 
-    @Test
+	/**
+	 * Test get decryption key using admin.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
     @Order(5)
     public void testGetDecryptionKeyAdmin() throws Exception  {
         path = "test1.txt";
@@ -147,12 +205,17 @@ public class DBManagerTesting {
             
         Assertions.assertEquals(200, res.getStatusCode().value());
         //Check if he can read
-        Assertions.assertEquals(true, res.getBody().get_auth());
+		Assertions.assertTrue(res.getBody().get_auth());
         //Check if he can write
-        Assertions.assertEquals(true, res.getBody().get_w_mode());
+		Assertions.assertTrue(res.getBody().get_w_mode());
     }
 
-    @Test
+	/**
+	 * Test get decryption key using owner.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
     @Order(6)
     public void testGetDecryptionKeyOwner() throws Exception  {
         path = "test1.txt";
@@ -177,12 +240,17 @@ public class DBManagerTesting {
             
         Assertions.assertEquals(200, res.getStatusCode().value());
         //Check if he can read
-        Assertions.assertEquals(true, res.getBody().get_auth());
+		Assertions.assertTrue(res.getBody().get_auth());
         //Check if he can write
-        Assertions.assertEquals(true, res.getBody().get_w_mode());
+		Assertions.assertTrue(res.getBody().get_w_mode());
     }
 
-    @Test
+	/**
+	 * Test get decryption key using authorized write user.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
 	@Order(7)
     public void testGetDecryptionKeyAuthorizedWriteUser() throws Exception  {
         path = "test1.txt";
@@ -212,7 +280,12 @@ public class DBManagerTesting {
         Assertions.assertEquals(true, res.getBody().get_w_mode());
     }
 
-    @Test
+	/**
+	 * Test get decryption key using authorized read user.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
 	@Order(8)
     public void testGetDecryptionKeyAuthorizedReadUser() throws Exception  {
         path = "test1.txt";
@@ -237,12 +310,17 @@ public class DBManagerTesting {
 
         Assertions.assertEquals(200, res.getStatusCode().value());
         //Check if he can read
-        Assertions.assertEquals(true, res.getBody().get_auth());
+		Assertions.assertTrue(res.getBody().get_auth());
         //Check if he cannot write
-        Assertions.assertEquals(false, res.getBody().get_w_mode());
+		Assertions.assertFalse(res.getBody().get_w_mode());
     }
 
-    @Test
+	/**
+	 * Test get decryption key using unauthorized user.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
 	@Order(9)
     public void testGetDecryptionKeyUnauthorizedUser() throws Exception  {
         path = "test1.txt";
@@ -268,7 +346,12 @@ public class DBManagerTesting {
         Assertions.assertEquals(401, res.getStatusCode().value());
     }
 
-    @Test
+	/**
+	 * Test get decryption key using corrupted file.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
 	@Order(10)
     public void testGetDecryptionKeyCorruptedFile() throws Exception  {
         path = "test1.txt";
@@ -294,7 +377,12 @@ public class DBManagerTesting {
         Assertions.assertEquals(412, res.getStatusCode().value());
     }
 
-    @Test
+	/**
+	 * Test get decryption key using wrong path_hash.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
 	@Order(11)
     public void testGetDecryptionKeyWrongPathHash() throws Exception  {
         path = "NotExistingPath.txt";
@@ -320,7 +408,12 @@ public class DBManagerTesting {
         Assertions.assertEquals(500, res.getStatusCode().value());
     }
 
-    @Test
+	/**
+	 * Test get decryption key bad request.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
 	@Order(12)
     public void testGetDecryptionKeyBadRequest() throws Exception  {
         url = fixedUrl + "decryption_key";
@@ -336,7 +429,12 @@ public class DBManagerTesting {
         Assertions.assertEquals(400, res.getStatusCode().value());
     }
 
-    @Test
+	/**
+	 * Test save file using owner.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
 	@Order(13)
     public void testSaveFileOwner() throws Exception  {
         path = "test1.txt";
@@ -362,7 +460,12 @@ public class DBManagerTesting {
         Assertions.assertEquals(200, res.getStatusCode().value());
     }
 
-    @Test
+	/**
+	 * Test save file using admin.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
 	@Order(14)
     public void testSaveFileAdmin() throws Exception  {
         path = "test1.txt";
@@ -388,7 +491,12 @@ public class DBManagerTesting {
         Assertions.assertEquals(200, res.getStatusCode().value());
     }
 
-    @Test
+	/**
+	 * Test save using authorized user.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
 	@Order(15)
     public void testSaveAuthorizedUser() throws Exception  {
         path = "test1.txt";
@@ -414,7 +522,12 @@ public class DBManagerTesting {
         Assertions.assertEquals(200, res.getStatusCode().value());
     }
 
-    @Test
+	/**
+	 * Test save using unauthorized user.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
 	@Order(15)
     public void testSaveUnAuthorizedUser() throws Exception  {
         path = "test1.txt";
@@ -440,7 +553,12 @@ public class DBManagerTesting {
         Assertions.assertEquals(401, res.getStatusCode().value());
     }
 
-    @Test
+	/**
+	 * Test save file using wrong path_hash.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
 	@Order(16)
     public void testSaveFileWrongPathHash() throws Exception  {
         path = "ThisIsNotAnExistingPath.txt";
@@ -466,7 +584,12 @@ public class DBManagerTesting {
         Assertions.assertEquals(401, res.getStatusCode().value());
     }
 
-    @Test
+	/**
+	 * Test save file bad request.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
 	@Order(15)
     public void testSaveFileBadRequest() throws Exception  {
         url = fixedUrl + "saveFile";
@@ -482,7 +605,12 @@ public class DBManagerTesting {
         Assertions.assertEquals(400, res.getStatusCode().value());
     }
 
-    @Test
+	/**
+	 * Test delete file owner.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
 	@Order(16)
     public void testDeleteFileOwner() throws Exception  {
         path = "test3.txt";
@@ -522,7 +650,12 @@ public class DBManagerTesting {
         Assertions.assertEquals(200, res.getStatusCode().value());
     }
 
-    @Test
+	/**
+	 * Test delete not existing file.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
 	@Order(17)
     public void testDeleteNotExistingFile() throws Exception  {
         path = "test4.txt";
@@ -547,7 +680,12 @@ public class DBManagerTesting {
         Assertions.assertEquals(401, res.getStatusCode().value());
     }
 
-    @Test
+	/**
+	 * Test delete file bad request.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
 	@Order(18)
     public void testDeleteFileBadRequest() throws Exception  {
         url = fixedUrl + "deleteFile";
@@ -563,7 +701,12 @@ public class DBManagerTesting {
         Assertions.assertEquals(400, res.getStatusCode().value());
     }
 
-    @AfterAll
+	/**
+	 * Delete all file created during the test.
+	 *
+	 * @throws Exception the exception
+	 */
+	@AfterAll
     public static void deleteAllFile()throws Exception  {
         String fixedUrl = "https://localhost:50880/api/v1/";
         RestTemplate rest = (new SecureRestTemplateConfig("Guard_keystore.jks", "GuardC_truststore.jks")).secureRestTemplate();
@@ -579,7 +722,7 @@ public class DBManagerTesting {
 
         try{
             rest.exchange(url, HttpMethod.DELETE, null, String.class);
-        } catch (HttpClientErrorException | HttpServerErrorException e){
+        } catch (HttpClientErrorException | HttpServerErrorException ignored){
         }
 
         path = "test2.txt";

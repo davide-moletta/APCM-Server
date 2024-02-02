@@ -16,12 +16,12 @@ import it.unitn.APCM.ACME.ServerCommon.CryptographyPrimitive;
  * The type Shamir used to generate the Shamir key with the secret key parts and to generate new keys when the Shamir password is changed.
  */
 public class Shamir {
-    /**
-     * The entry point of application.
-     *
-     * @param args the input arguments which are the parts of the shamir secret key
-     */
-    public static void main(String[] args) {
+	/**
+	 * The entry point of application.
+	 *
+	 * @param args the input arguments which are the parts of the shamir secret key
+	 */
+	public static void main(String[] args) {
         generateShamir();
         generateEffectiveKey(args);
     }

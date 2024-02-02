@@ -56,13 +56,13 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * The type Guard rest interface.
+ * The Guard REST interface.
  */
 @RestController
 @RequestMapping("/api/v1")
 public class Guard_RESTInterface {
 	/**
-	 * The constant connection.
+	 * The constant connection to the DB file of the Guard.
 	 */
 	private final Connection conn = Guard_Connection.getDbconn();
 	/**
@@ -74,21 +74,21 @@ public class Guard_RESTInterface {
 	 */
 	private static final String dbServer_url = String.format("https://%s/api/v1/", Guard_RESTApp.srvdb);
 	/**
-	 * The constant File path.
+	 * The constant Path where the file are stored.
 	 */
 	private static final String fP = URI.create(System.getenv("FILE_DIRECTORY")).toString();
 	/**
-	 * The constant encryption algorithm.
+	 * The encryption algorithm AES used to create a new secret key.
 	 */
 	static final String algorithm = "AES";
 
 	/**
 	 * The Secure rest template.
 	 */
-	private RestTemplate secureRestTemplate = (new SecureRestTemplateConfig("Guard_keystore.jks", "GuardC_truststore.jks")).secureRestTemplate();
+	private final RestTemplate secureRestTemplate = (new SecureRestTemplateConfig("Guard_keystore.jks", "GuardC_truststore.jks")).secureRestTemplate();
 
 	/**
-	 * The Jwt utils.
+	 * The Jwt utils Bean reference.
 	 */
 	@Autowired
 	private JWT_Utils JWT_Utils;
@@ -134,7 +134,7 @@ public class Guard_RESTInterface {
 	 *
 	 * @param email the email of the user
 	 * @param jwt   the jwt token of the user
-	 * @return the files
+	 * @return the files present in the Files directory
 	 */
 	@GetMapping("/files")
 	public ResponseEntity<String> get_files(@RequestParam String email, @RequestHeader String jwt) {
@@ -223,7 +223,7 @@ public class Guard_RESTInterface {
 	*/
 
 	/**
-	 * Endpoint to login
+	 * Endpoint to log in and retrieve the JWT token
 	 *
 	 * @param credentials the credentials of the user as JSON
 	 * @return the response entity
@@ -303,7 +303,7 @@ public class Guard_RESTInterface {
 	 *
 	 * @param email the email of the user requesting the file
 	 * @param path  the path of the file
-	 * @param jwt   the jwt token of the user
+	 * @param jwt   the JWT token of the user
 	 * @return the file
 	 * @throws IOException the io exception
 	 */
@@ -417,7 +417,7 @@ public class Guard_RESTInterface {
 	 * @param email         the email of the user requesting to save the file
 	 * @param path          the path of the file
 	 * @param newTextToSave the new text to save
-	 * @param jwt           the jwt token of the user
+	 * @param jwt           the JWT token of the user
 	 * @return the response entity
 	 * @throws IOException the io exception
 	 */
@@ -490,7 +490,6 @@ public class Guard_RESTInterface {
 						log.trace("Requesting for: " + DB_request2_url);
 						// sends the request and capture the response
 						ResponseEntity<String> resp = srt.postForEntity(DB_request2_url, null, String.class);
-						assert resp != null;
 						// Check if the file has been saved
 						if (resp.getStatusCode() == HttpStatus.OK) {
 							status = HttpStatus.OK;
@@ -531,9 +530,9 @@ public class Guard_RESTInterface {
 	 *
 	 * @param email     the email of the user requesting to create the file
 	 * @param path      the path of the file
-	 * @param r_groups  the r groups of the file
-	 * @param rw_groups the rw groups of the file
-	 * @param jwt       the jwt token of the user
+	 * @param r_groups  the read privileges groups of the file
+	 * @param rw_groups the read-write privileges groups of the file
+	 * @param jwt       the JWT token of the user
 	 * @return the response entity
 	 * @throws Exception the exception
 	 */
@@ -645,7 +644,7 @@ public class Guard_RESTInterface {
 	 *
 	 * @param email the email of the user requesting to delete the file
 	 * @param path  the path of the file
-	 * @param jwt   the jwt token of the user
+	 * @param jwt   the JWT token of the user
 	 * @return the response entity
 	 * @throws IOException the io exception
 	 */
@@ -802,10 +801,10 @@ public class Guard_RESTInterface {
 	}
 
 	/**
-	 * Gets user privilege from the DB.
+	 * Gets user privilege from the DB file of the users.
 	 *
-	 * @param email the email
-	 * @return the user privilege
+	 * @param email the email of the user
+	 * @return the UserPrivilege object representing the privileges of the user in the ACME infrastructure
 	 */
 	private UserPrivilege getUserPrivilege(String email) {
 		ArrayList<String> groups = null;
@@ -842,11 +841,11 @@ public class Guard_RESTInterface {
 	}
 
 	/**
-	 * Secure path to check for path traversal attempts.
+	 * Simple implementation to check for path traversal attempts.
 	 *
 	 * @param basePath the base path of the directory of files
 	 * @param userPath the user path requested
-	 * @return the boolean
+	 * @return the boolean representing of the path is secure or not
 	 */
 	private boolean securePath(String basePath, String userPath) {
 		// Get the path of the directory

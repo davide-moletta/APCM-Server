@@ -28,10 +28,10 @@ public class Response {
     /**
      * Instantiates a new Response.
      *
-     * @param path_hash the path hash
-     * @param email     the email
-     * @param w_mode    the w mode
-     * @param auth      the auth
+     * @param path_hash the path hash string
+     * @param email     the email fo the user
+     * @param w_mode    the boolean that represent if the write mode is enabled
+     * @param auth      the boolean that represent if the user is authenticated
      * @param key       the key
      */
     public Response(String path_hash, String email, boolean w_mode, boolean auth, byte[] key) {
@@ -57,9 +57,9 @@ public class Response {
     public void set_email(String email) {this.email = email;}
 
     /**
-     * Sets w mode.
+     * Sets write mode.
      *
-     * @param w_mode the w mode
+     * @param w_mode the write mode
      */
     public void set_w_mode(boolean w_mode) {this.w_mode = w_mode;}
 
@@ -71,7 +71,7 @@ public class Response {
     public void set_key(byte[] key) {this.key = key;}
 
     /**
-     * Sets auth.
+     * Sets authentication of the user.
      *
      * @param auth the auth
      */
@@ -92,9 +92,9 @@ public class Response {
     public String get_email() {return this.email;}
 
     /**
-     * Gets w mode.
+     * Gets write mode.
      *
-     * @return the w mode
+     * @return the write mode
      */
     public boolean get_w_mode() {return this.w_mode;}
 
@@ -106,7 +106,7 @@ public class Response {
     public byte[] get_key() {return this.key;}
 
     /**
-     * Gets auth.
+     * Gets authentication of the user.
      *
      * @return the auth
      */

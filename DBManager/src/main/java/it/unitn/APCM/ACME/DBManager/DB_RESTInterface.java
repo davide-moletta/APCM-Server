@@ -21,13 +21,13 @@ import java.util.Arrays;
 import javax.crypto.SecretKey;
 
 /**
- * The type DB rest interface.
+ * The DBManager REST interface.
  */
 @RestController
 @RequestMapping("/api/v1")
 public class DB_RESTInterface {
 	/**
-	 * The constant connenction.
+	 * The constant connection to the DB file of the DBManager.
 	 */
 	private final Connection conn = DB_Connection.getDbconn();
 	/**
@@ -41,10 +41,8 @@ public class DB_RESTInterface {
 	 * @param path_hash  the path hash of the file
 	 * @param file_hash  the file hash of the file
 	 * @param email      the email of the user that is trying to access the file
-	 * @param user_group the user group of the user that is trying to access the
-	 *                   file
-	 * @param admin      the admin flag of the user that is trying to access the
-	 *                   file
+	 * @param user_group the user group of the user that is trying to access the file
+	 * @param admin      the admin flag of the user that is trying to access the file
 	 * @return the key to decrypt the file
 	 */
 	@GetMapping("/decryption_key")
@@ -219,13 +217,11 @@ public class DB_RESTInterface {
 	/**
 	 * Endpoint to save file
 	 *
-	 * @param path_hash the path hash of the file
-	 * @param file_hash the file hash of the file
-	 * @param email      the email of the user that is trying to access the file
-	 * @param user_group the user group of the user that is trying to access the
-	 *                   file
-	 * @param admin      the admin flag of the user that is trying to access the
-	 *                   file
+	 * @param path_hash  the path hash of the file
+	 * @param file_hash  the file hash of the file
+	 * @param email      the email of the user that is trying to save the file
+	 * @param user_group the user group of the user that is trying to save the file
+	 * @param admin      the admin flag of the user that is trying to save the file
 	 * @return the response entity
 	 */
 	@PostMapping("/saveFile")
@@ -272,11 +268,9 @@ public class DB_RESTInterface {
 	 * Endpoint to delete a file
 	 *
 	 * @param path_hash the path hash of the file
-	 * @param email      the email of the user that is trying to access the file
-	 * @param user_group the user group of the user that is trying to access the
-	 *                   file
-	 * @param admin      the admin flag of the user that is trying to access the
-	 *                   file
+	 * @param email      the email of the user that is trying to delete the file
+	 * @param user_group the user group of the user that is trying to delete the file
+	 * @param admin      the admin flag of the user that is trying to delete the file
 	 * @return the response entity
 	 */
 	@DeleteMapping("/deleteFile")
@@ -317,6 +311,15 @@ public class DB_RESTInterface {
 		return new ResponseEntity<>(res, headers, status);
 	}
 
+	/**
+	 * Check if the user has write permission on the file requested
+	 *
+	 * @param path_hash  the path hash
+	 * @param email      the email
+	 * @param user_group the user group
+	 * @param admin      the admin
+	 * @return the boolean result of the check
+	 */
 	private boolean checkWritePermission(String path_hash, String email, String user_group, String admin){
 		log.trace("Checking permissions: " + email);
 

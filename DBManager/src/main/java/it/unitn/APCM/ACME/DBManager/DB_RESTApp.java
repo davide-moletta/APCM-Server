@@ -33,7 +33,9 @@ public class DB_RESTApp {
 	/**
 	 * The entry point of application.
 	 *
-	 * @param args the input arguments which are specified in the launch.json file
+	 * @param args the input arguments representing the 3 (from a total of 5) part of the Shamire Master key
+	 *                which could be also specified in the launch.json file.
+	 *             All the args with '--' is intercepted directly to the Spring framework
 	 */
 	public static void main(String[] args) {
 		SpringApplication app = new SpringApplication(DB_RESTApp.class);
@@ -63,7 +65,7 @@ public class DB_RESTApp {
 			// Generate the Shamir key from the retrieved parts
 			byte[] keyByte = Secrets.join(parts);
 			SecretKey shamirKey =  new SecretKeySpec(keyByte, 0, keyByte.length, "AES");
-			// Decrypt the encrypted master key with the Shamir key
+			// Decrypt the encrypted master (effective) key with the Shamir key
 			String effEncKey = System.getenv("EFFECTIVE_ENCRYPTED_KEY");
 			if (effEncKey != null) {
 				byte[] effEncKeyBytes = Base64.getDecoder().decode(effEncKey);
@@ -76,7 +78,7 @@ public class DB_RESTApp {
 				log.info("DB_RESTApp started");
 			}
 			else {
-				log.error("EFFECTIVE_ENCRYPTED_KEY envvar must be present");
+				log.error("EFFECTIVE_ENCRYPTED_KEY ENVvar must be present");
 			}
 		}
 		catch (NullPointerException e) {

@@ -24,7 +24,7 @@ public class CryptographyPrimitive {
      */
     static final String algorithm = "AES";
     /**
-     * The Transformation.
+     * The Transformation used.
      */
     static final String transformation = "AES/GCM/NoPadding";
     /**
@@ -32,17 +32,17 @@ public class CryptographyPrimitive {
      */
     static final int keyByteLen = 32;
     /**
-     * The Ivlen.
+     * The Ivlen size.
      */
     static final int IVLEN = 12;
 
-    /**
-     * Function that returns the hash of a byte array.
-     *
-     * @param hash the byte array of content to hash
-     * @return the hash
-     */
-    public String getHash(byte[] hash) {
+	/**
+	 * Function that returns the hash of a byte array.
+	 *
+	 * @param hash the byte array of content to hash
+	 * @return the hash
+	 */
+	public String getHash(byte[] hash) {
         try {
             // Instantiate the SHA-512
             MessageDigest md = MessageDigest.getInstance("SHA-512");
@@ -58,12 +58,12 @@ public class CryptographyPrimitive {
         }
     }
 
-    /**
-     * Function to generate a random symmetric key.
-     *
-     * @return the symmetric key
-     */
-    public SecretKey getSymmetricKey() {
+	/**
+	 * Function to generate a random symmetric key.
+	 *
+	 * @return the symmetric key
+	 */
+	public SecretKey getSymmetricKey() {
         SecretKey cipherKey = null;
 
         // if no valid data read from file, create new
@@ -81,14 +81,14 @@ public class CryptographyPrimitive {
         return cipherKey;
     }
 
-    /**
-     * Encrypt byte [ ] with the specified simmetric key.
-     *
-     * @param textToEnc the text to enc
-     * @param key       the key
-     * @return the byte [ ]
-     */
-    public byte[] encrypt(byte[] textToEnc, SecretKey key) {
+	/**
+	 * Encrypt byte [ ] with the specified simmetric key.
+	 *
+	 * @param textToEnc the text to enc
+	 * @param key       the key
+	 * @return the byte [ ]
+	 */
+	public byte[] encrypt(byte[] textToEnc, SecretKey key) {
         // check that there is some data to encrypt
         if (textToEnc.length == 0) {
             return null;
@@ -121,14 +121,14 @@ public class CryptographyPrimitive {
         }
     }
 
-    /**
-     * Decrypt byte [ ] with the specified simmetric key.
-     *
-     * @param encText the enc text
-     * @param key     the key
-     * @return the byte [ ]
-     */
-    public byte[] decrypt(byte[] encText, SecretKey key) {
+	/**
+	 * Decrypt byte [ ] with the specified simmetric key.
+	 *
+	 * @param encText the enc text
+	 * @param key     the key
+	 * @return the byte [ ]
+	 */
+	public byte[] decrypt(byte[] encText, SecretKey key) {
         // check that there is some data to decrypt
         if (encText.length == 0) {
             return null;

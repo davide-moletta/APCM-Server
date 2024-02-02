@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.*;
 
 /**
- * Class to connect the DB side of the project
+ * Class to connect the code with a SQLite JDBC driver
  */
 public class JDBC_Connection {
 	/**
@@ -29,7 +29,7 @@ public class JDBC_Connection {
 	/**
 	 * Gets Connection to DB.
 	 *
-	 * @return the conn
+	 * @return the connection to the DB
 	 */
 	public Connection getConn() { return conn; }
 

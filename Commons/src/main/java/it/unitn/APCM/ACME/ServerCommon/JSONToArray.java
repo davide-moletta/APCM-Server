@@ -7,14 +7,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 
 /**
- * The type Json to array.
+ * Class used to convert JSON Array to Array
+ * The class represent an ArrayList
  */
 public class JSONToArray extends ArrayList<String> {
 
 	/**
 	 * Instantiates a new Json to array.
 	 *
-	 * @param str the str
+	 * @param str the string representing the JSON list
 	 * @throws JsonProcessingException the json processing exception
 	 */
 	public JSONToArray(String str) throws JsonProcessingException {
