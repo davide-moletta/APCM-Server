@@ -325,7 +325,7 @@ public class GuardTesting {
             res = new ResponseEntity<>(e.getStatusCode());
         }
         
-        Assertions.assertEquals(201, res.getStatusCode().value());
+        Assertions.assertEquals(200, res.getStatusCode().value());
     }
 
     @Test
@@ -347,7 +347,7 @@ public class GuardTesting {
             res = new ResponseEntity<>(e.getStatusCode());
         }
         
-        Assertions.assertEquals(201, res.getStatusCode().value());
+        Assertions.assertEquals(200, res.getStatusCode().value());
 
         url = fixedUrl + "file?email=" + ownEmail + 
             "&path=" + newTestingPath;
@@ -386,7 +386,7 @@ public class GuardTesting {
             res = new ResponseEntity<>(e.getStatusCode());
         }
         
-        Assertions.assertEquals(201, res.getStatusCode().value());
+        Assertions.assertEquals(200, res.getStatusCode().value());
     }
 
     @Test

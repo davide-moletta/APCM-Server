@@ -482,16 +482,23 @@ public class Guard_RESTInterface {
 						String DB_request2_url = dbServer_url + "saveFile?" +
 								"path_hash="
 								+ (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8))
-								+ "&file_hash=" + (new CryptographyPrimitive()).getHash(textEnc);
+								+ "&file_hash=" + (new CryptographyPrimitive()).getHash(textEnc)
+								+ "&email=" + email +
+								"&user_groups=" + user.getGroups() +
+								"&admin=" + user.getAdmin();
 
 						log.trace("Requesting for: " + DB_request2_url);
 						// sends the request and capture the response
-						String res2 = srt.postForEntity(DB_request2_url, null, String.class).getBody();
-						assert res2 != null;
+						ResponseEntity<String> resp = srt.postForEntity(DB_request2_url, null, String.class);
+						assert resp != null;
 						// Check if the file has been saved
-						if (res2.equals("success")) {
-							status = HttpStatus.CREATED;
+						if (resp.getStatusCode() == HttpStatus.OK) {
+							status = HttpStatus.OK;
 							response = "success";
+						} else if (resp.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+							status = HttpStatus.FORBIDDEN;
+							log.error("Unauthorized user to save the file: "+path);
+							response = "error";
 						}
 					} else {
 						status = HttpStatus.FORBIDDEN;
@@ -551,6 +558,9 @@ public class Guard_RESTInterface {
 
 		// Validate the JWT token
 		if (JWT_Utils.validateToken(jwt, email)) {
+			// Get the user privilege
+			UserPrivilege user = new UserPrivilege(JWT_Utils.extractAdmin(jwt), JWT_Utils.extractGroups(jwt));
+
 			// craft the request to the db interface
 			String DB_request_url = dbServer_url + "newFile?" +
 					"path_hash=" + (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8)) +
@@ -597,7 +607,10 @@ public class Guard_RESTInterface {
 				log.error("Error in the creation of the file");
 
 				String DB_delete_url = dbServer_url + "deleteFile?" +
-						"path_hash=" + (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8));
+						"path_hash=" + (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8)) +
+						"&email=" + email +
+						"&user_groups=" + user.getGroups() +
+						"&admin=" + user.getAdmin();
 
 				try {
 					log.trace("Requesting for: " + DB_delete_url);
@@ -607,6 +620,10 @@ public class Guard_RESTInterface {
 					log.trace("" + res);
 					if (res == HttpStatus.OK) {
 						log.trace("File deleted");
+					}else if (res == HttpStatus.UNAUTHORIZED) {
+						status = HttpStatus.FORBIDDEN;
+						log.error("Unauthorized user to delete the file: "+path);
+						response = "error";
 					} else {
 						log.error("Impossible to delete");
 					}
@@ -726,7 +743,10 @@ public class Guard_RESTInterface {
 						// File deleted, request the db to remove the entry
 						String DB_delete_url = dbServer_url + "deleteFile?" +
 								"path_hash="
-								+ (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8));
+								+ (new CryptographyPrimitive()).getHash(path.getBytes(StandardCharsets.UTF_8))
+								+ "&email=" + email +
+								"&user_groups=" + user.getGroups() +
+								"&admin=" + user.getAdmin();
 
 						// Request the db to delete the file
 						try {
@@ -743,6 +763,10 @@ public class Guard_RESTInterface {
 								response = "success";
 								status = HttpStatus.OK;
 								file_deleted_DB = true;
+							} else if (code == HttpStatus.UNAUTHORIZED) {
+								status = HttpStatus.FORBIDDEN;
+								log.error("Unauthorized user to delete the file: "+path);
+								response = "error";
 							} else {
 								log.error("Impossible to delete");
 							}

@@ -221,11 +221,19 @@ public class DB_RESTInterface {
 	 *
 	 * @param path_hash the path hash of the file
 	 * @param file_hash the file hash of the file
+	 * @param email      the email of the user that is trying to access the file
+	 * @param user_group the user group of the user that is trying to access the
+	 *                   file
+	 * @param admin      the admin flag of the user that is trying to access the
+	 *                   file
 	 * @return the response entity
 	 */
 	@PostMapping("/saveFile")
 	public ResponseEntity<String> save_File(@RequestParam(value = "path_hash") String path_hash,
-			@RequestParam(value = "file_hash") String file_hash) {
+			@RequestParam(value = "file_hash") String file_hash,
+			@RequestParam(value = "email") String email,
+			@RequestParam(value = "user_groups") String user_group,
+			@RequestParam(value = "admin") String admin) {
 
 		// Setup the response and headers
 		HttpHeaders headers = new HttpHeaders();
@@ -234,22 +242,27 @@ public class DB_RESTInterface {
 
 		log.trace("Request to save a file");
 
-		// Prepare the query to update the file hash
-		String updateHashQuery = "UPDATE Files SET file_hash = ? WHERE path_hash = ?";
-		PreparedStatement ps;
-		try {
-			// Set the parameters
-			ps = conn.prepareStatement(updateHashQuery);
-			ps.setString(1, file_hash);
-			ps.setString(2, path_hash);
-			// Execute the query and check if it was successful
-			if (ps.executeUpdate() != 0) {
-				res = "success";
-				status = HttpStatus.OK;
+		if(checkWritePermission(path_hash, email, user_group, admin)){
+			// Prepare the query to update the file hash
+			String updateHashQuery = "UPDATE Files SET file_hash = ? WHERE path_hash = ?";
+			PreparedStatement ps;
+			try {
+				// Set the parameters
+				ps = conn.prepareStatement(updateHashQuery);
+				ps.setString(1, file_hash);
+				ps.setString(2, path_hash);
+				// Execute the query and check if it was successful
+				if (ps.executeUpdate() != 0) {
+					res = "success";
+					status = HttpStatus.OK;
+				}
+			} catch (SQLException e) {
+				log.error("Error in updating file hash in the db: " + e.getMessage());
+				throw new RuntimeException(e);
 			}
-		} catch (SQLException e) {
-			log.error("Error in updating file hash in the db: " + e.getMessage());
-			throw new RuntimeException(e);
+		} else {
+			log.error("Unauthorized users");
+			status = HttpStatus.UNAUTHORIZED;
 		}
 
 		return new ResponseEntity<>(res, headers, status);
@@ -259,10 +272,18 @@ public class DB_RESTInterface {
 	 * Endpoint to delete a file
 	 *
 	 * @param path_hash the path hash of the file
+	 * @param email      the email of the user that is trying to access the file
+	 * @param user_group the user group of the user that is trying to access the
+	 *                   file
+	 * @param admin      the admin flag of the user that is trying to access the
+	 *                   file
 	 * @return the response entity
 	 */
 	@DeleteMapping("/deleteFile")
-	public ResponseEntity<String> delete_File(@RequestParam(value = "path_hash") String path_hash) {
+	public ResponseEntity<String> delete_File(@RequestParam(value = "path_hash") String path_hash,
+		@RequestParam(value = "email") String email,
+		@RequestParam(value = "user_groups") String user_group,
+		@RequestParam(value = "admin") String admin) {
 
 		// Setup the response and headers
 		HttpHeaders headers = new HttpHeaders();
@@ -271,23 +292,71 @@ public class DB_RESTInterface {
 
 		log.trace("Request to delete a file");
 
-		// Prepare the query to delete the file
-		String updateHashQuery = "DELETE FROM Files WHERE path_hash = ?";
-		PreparedStatement ps;
-		try {
-			// Set the parameters
-			ps = conn.prepareStatement(updateHashQuery);
-			ps.setString(1, path_hash);
-			// Execute the query and check if it was successful
-			if (ps.executeUpdate() != 0) {
-				res = "success";
-				status = HttpStatus.OK;
+		if(checkWritePermission(path_hash, email, user_group, admin)){
+			// Prepare the query to delete the file
+			String updateHashQuery = "DELETE FROM Files WHERE path_hash = ?";
+			PreparedStatement ps;
+			try {
+				// Set the parameters
+				ps = conn.prepareStatement(updateHashQuery);
+				ps.setString(1, path_hash);
+				// Execute the query and check if it was successful
+				if (ps.executeUpdate() != 0) {
+					res = "success";
+					status = HttpStatus.OK;
+				}
+			} catch (SQLException e) {
+				log.error("Error in deleting file in the db: " + e.getMessage());
+				throw new RuntimeException(e);
 			}
-		} catch (SQLException e) {
-			log.error("Error in deleting file in the db: " + e.getMessage());
-			throw new RuntimeException(e);
+		} else {
+			log.error("Unauthorized users");
+			status = HttpStatus.UNAUTHORIZED;
 		}
 
 		return new ResponseEntity<>(res, headers, status);
+	}
+
+	private boolean checkWritePermission(String path_hash, String email, String user_group, String admin){
+		log.trace("Checking permissions: " + email);
+
+		ArrayList<String> user_groups = new ArrayList<String>(Arrays.asList(user_group.split(",")));
+		boolean writePermission = false;
+
+		// Prepare the query to get the file info
+		String getInfoQuery = "SELECT owner, rw_groups FROM Files WHERE path_hash = ?";
+		PreparedStatement ps;
+		try {
+			ps = conn.prepareStatement(getInfoQuery);
+			ps.setString(1, path_hash);
+			ResultSet rs = ps.executeQuery();
+			while (rs.next()) {
+				// Check if there are more than one result
+				if (rs.isFirst()) {
+					// Check if the user is authorized to access the file
+					if (admin.equals("1") || rs.getString("owner").equals(email)) {
+						writePermission = true;
+					} else {
+						ArrayList<String> rw_groups = new JSONToArray(rs.getString("rw_groups"));
+						
+						// If user is neither admin nor owner check the groups
+						for (String g : user_groups) {
+							// Check if the user is in the rw_groups or only in the r groups
+							if (rw_groups.contains(g)) {
+								writePermission = true;
+								break;
+							}
+						}
+					}
+				} else {
+					// more than one result
+					log.error("Found more than one path_hash, possible collision or multiple row for one file");
+				}
+			}
+		} catch (SQLException | JsonProcessingException e) {
+			log.error("Error in getting file info from the db: " + e.getMessage());
+		}
+
+		return writePermission;
 	}
 }
