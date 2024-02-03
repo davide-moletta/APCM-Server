@@ -35,6 +35,10 @@ public class CryptographyPrimitive {
      * The Ivlen size.
      */
     static final int IVLEN = 12;
+    /**
+     * The Taglen size.
+     */
+    static final int TAGLEN = 16;
 
 	/**
 	 * Function that returns the hash of a byte array.
@@ -99,7 +103,7 @@ public class CryptographyPrimitive {
 
             byte[] iv = new byte[IVLEN];
             (new SecureRandom()).nextBytes(iv);
-            GCMParameterSpec spec = new GCMParameterSpec(IVLEN * java.lang.Byte.SIZE, iv);
+            GCMParameterSpec spec = new GCMParameterSpec(TAGLEN * java.lang.Byte.SIZE, iv);
             // Initialize the cipher for encryption
             cipher.init(Cipher.ENCRYPT_MODE, key, spec);
 
@@ -146,7 +150,7 @@ public class CryptographyPrimitive {
             // second part is the ciphertext
             System.arraycopy(encText, IVLEN, ciphertext, 0, ciphertext.length);
             // initialize parameters
-            GCMParameterSpec spec = new GCMParameterSpec(IVLEN * java.lang.Byte.SIZE, iv);
+            GCMParameterSpec spec = new GCMParameterSpec(TAGLEN * java.lang.Byte.SIZE, iv);
             // Initialize cipher for decryption
             cipher.init(Cipher.DECRYPT_MODE, key, spec);
             // Decrypt the input data
